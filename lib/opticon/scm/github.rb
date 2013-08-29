@@ -7,9 +7,8 @@ class Opticon::Scm::Github
 	
 
 	def initialize(opts = {})
-		unless opts.has_key? :repo
-			raise ArgumentError "Repository name must be provided"
-		end
+		raise ArgumentError, "Repository name must be provided" \
+			unless opts.has_key? :repo
 
 		@log = Opticon::Logger
 
@@ -17,8 +16,11 @@ class Opticon::Scm::Github
 		@config = Opticon::Settings.scm
 		@config.deep_merge! opts
 
+		## Entry point for all things github
 		@octo = Octokit::Client.new :login => @config.username,
 			                        :password => @config.password
+
+		## Sure is ugly
 		@repo_url = @config.url.split('//') \
 								.join("//#{@config.username}:#{@config.password}@") \
 								+ "/#{@config.repo}"
@@ -27,6 +29,7 @@ class Opticon::Scm::Github
 		@repo_path = Octokit::Repository.from_url @repo_url
 		@repo = @octo.repository? @repo_path
 
+		## Local path
 		@path = "#{@config.local_path}/#{@config.repo}"
 	end
 
