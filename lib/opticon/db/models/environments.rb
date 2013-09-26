@@ -11,8 +11,14 @@ class Opticon::Schema::Environment < ActiveRecord::Base
   has_many :sf_objects, :dependent => :destroy
   has_many :changesets, :dependent => :destroy
 
+  def initialize()
+    @log = Opticon::Logger
+    @config = Opticon::Settings.salesforce
+    super()
+  end
+
   def remove
-    # We skip the instantiation for speed, going straight to single
+    # We skip the instantiation and go straight to single
     # statement deletion
     sf_objects.delete_all
     changesets.delete_all
@@ -31,7 +37,7 @@ class Opticon::Schema::Environment < ActiveRecord::Base
     unless @client
         Metaforce.configure do |c|
           c.host = 'test.salesforce.com' unless self[:production]
-          c.log = ::Logger.new STDERR
+          c.log = Opticon::Logger
         end
 
         @client = Metaforce::Metadata::Client.new :username => self[:username], 
@@ -50,15 +56,23 @@ class Opticon::Schema::Environment < ActiveRecord::Base
   # production org.
   def init
     @scm = Opticon::Scm.new(:repo => name)
+    scanner = Opticon::Scan.new(self)
+    scanner.snapshot    
 
     if production
       init_production
+      retrieve_full_org
     else
       init_branch
     end
+  end
 
-    scanner = Opticon::Scan.new(self)
-    scanner.snapshot
+  def retrieve_full_org
+    manifest = self.generate_manifest(sf_objects)
+    manifest.keys.each do |type|
+      @log.debug("Retrieving #{type}")
+      
+    end
   end
 
   def init_production

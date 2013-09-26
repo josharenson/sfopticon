@@ -94,18 +94,9 @@ class Opticon::Scan
 	end
 
 	def gather_types
-		@names = []
-		@client.describe[:metadata_objects].each do |item|
-			@names.push item[:xml_name] unless @names.include? item[:xml_name]
-
-			if item[:child_xml_names].kind_of?(Array)
-				item[:child_xml_names].each do |c|
-					unless c.nil?
-						@names.push c unless @names.include? c
-					end 
-				end
-			end
-		end
-		return @names		
+		# We've moved to hardcoding the available metadata types
+		# in application.yml, rather than going after all of them
+		# in every case
+		return Opticon::Settings.salesforce.metadata_types
 	end
 end
