@@ -61,7 +61,9 @@ class Opticon::Schema::Environment < ActiveRecord::Base
 
     if production
       init_production
-      retrieve_full_org
+      retrieve_full_org    
+      @scm.add
+      @scm.commit("Initial push of production code")
     else
       init_branch
     end
@@ -69,9 +71,10 @@ class Opticon::Schema::Environment < ActiveRecord::Base
 
   def retrieve_full_org
     manifest = self.class.generate_manifest(sf_objects)
-    manifest.keys.each do |type|
-      @log.debug("Retrieving #{type}")
-    end
+    @log.debug { "Retrieving #{manifest.keys.join(',')}" }
+    @client.retrieve_unpackaged(manifest)
+      .extract_to(@scm.path)
+      .perform
   end
 
   def init_production
@@ -91,7 +94,7 @@ class Opticon::Schema::Environment < ActiveRecord::Base
 
       manifest[sym].push(sf_object[:full_name])
     end
-    return manifest
+    return Metaforce::Manifest.new(manifest)
   end    
 
   def self.manifest(object_list)
