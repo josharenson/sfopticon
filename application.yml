@@ -12,9 +12,9 @@ database:
 
 scm:
   adapter: github
-  url:
-  username:
-  password:
+  url: https://github.com/ryanparr
+  username: ryanparr
+  password: *************
   local_path: orgs
   options: # Options specific to this adapter
     description:
@@ -27,6 +27,10 @@ scm:
     team_id:
     auto_init:
     gitignore_template:
+
+test:
+  username: ryan.parr@isilon.com
+  password: *********
 
 logging:
   logdev: debug_log.txt

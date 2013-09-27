@@ -11,10 +11,10 @@ class Opticon::Schema::Environment < ActiveRecord::Base
   has_many :sf_objects, :dependent => :destroy
   has_many :changesets, :dependent => :destroy
 
-  def initialize()
+  def initialize(*args)
     @log = Opticon::Logger
     @config = Opticon::Settings.salesforce
-    super()
+    super(*args)
   end
 
   def remove

@@ -97,6 +97,7 @@ class Opticon::Scan
 		# We've moved to hardcoding the available metadata types
 		# in application.yml, rather than going after all of them
 		# in every case
-		return Opticon::Settings.salesforce.metadata_types
+		@names = Opticon::Settings.salesforce.metadata_types
+		@names
 	end
 end

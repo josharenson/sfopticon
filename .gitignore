@@ -22,3 +22,5 @@ doc/
 # Sloppy stuff
 ant
 orgs/*
+debug_log.txt
+output.txt
