@@ -10,7 +10,7 @@ describe Opticon::Schema::Environment do
 	end
 
 	context "Production environment creation" do
-		it "should create a production environment" do
+		it "should create a production environment", :create_prod do
 			@prod = Opticon::Schema::Environment.create(
 						:name => 'SPEC-Production',
 				    	:username => Opticon::Settings.test.username,
