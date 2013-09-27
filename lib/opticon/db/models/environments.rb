@@ -68,10 +68,9 @@ class Opticon::Schema::Environment < ActiveRecord::Base
   end
 
   def retrieve_full_org
-    manifest = self.generate_manifest(sf_objects)
+    manifest = self.class.generate_manifest(sf_objects)
     manifest.keys.each do |type|
       @log.debug("Retrieving #{type}")
-      
     end
   end
 
