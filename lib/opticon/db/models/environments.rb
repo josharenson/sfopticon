@@ -62,7 +62,7 @@ class Opticon::Schema::Environment < ActiveRecord::Base
     if production
       init_production
       retrieve_full_org    
-      @scm.add
+      @scm.add_changes
       @scm.commit("Initial push of production code")
     else
       init_branch
@@ -73,8 +73,8 @@ class Opticon::Schema::Environment < ActiveRecord::Base
     manifest = self.class.generate_manifest(sf_objects)
     @log.debug { "Retrieving #{manifest.keys.join(',')}" }
     @client.retrieve_unpackaged(manifest)
-      .extract_to(@scm.path)
-      .perform
+           .extract_to(@scm.path)
+           .perform
   end
 
   def init_production

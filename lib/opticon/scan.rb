@@ -10,16 +10,12 @@ class Opticon::Scan
 
 	def snapshot
 		## Env has to have it's current sf_objects wiped out
-		@log.info("Deleting all sfobjects for #{@env.name}")
+		@log.info { "Deleting all sfobjects for #{@env.name}" }
 		Opticon::Schema::SfObject.where(:environment_id => @env.id).delete_all()
 
-		@log.info("Deleting logged changes for #{@env.name}")
+		@log.info { "Deleting logged changes for #{@env.name}" }
 		Opticon::Schema::Changeset.where(:environment_id => @env.id).destroy_all()
 
-		## Determine the types we'll list. This includes all top-level
-		## items and their children. Some children won't be available,
-		## so we just skip them.
-		gather_types
 		gather_metadata
 		
 		Opticon::Schema::SfObject.transaction do
@@ -31,12 +27,11 @@ class Opticon::Scan
 	end
 
 	def changeset
-		gather_types
 		gather_metadata
 
 		orig = nil
 		if @type
-			@log.info("Fetching only sf_objects of type #{@type}")
+			@log.info { "Fetching only sf_objects of type #{@type}" }
 			orig = @env.sf_objects.where("object_type = ?", @type)
 			puts "Fetched #{orig.size} objects"
 		else
@@ -69,12 +64,14 @@ class Opticon::Scan
 		@sfobjects = []
 		mg = Opticon::Schema::SfObject
 
-		if(@type)
-			@names = [@type]
+		types = if(@type)
+			[@type]
+		else
+			metadata_types
 		end
 
-		@names.each do |item|
-			@log.info "Gathering #{item}"
+		types.each do |item|
+			@log.info { "Gathering #{item}" }
 			begin
 				for rec in @client.list_metadata item do
 					if rec.include?(:full_name) and rec.include?(:last_modified_date)
@@ -83,17 +80,17 @@ class Opticon::Scan
 						rec[:sfobject_id] = rec[:id]
 						rec[:object_type] = rec[:type]
 						rec[:environment_id] = @env[:id]
-						@sfobjects.push(mg.map_fields_from_sf(rec))
+						@sfobjects << mg.map_fields_from_sf(rec)
 					end
 				end
 			rescue
-				@log.warn "#{item} failed to gather"
+				@log.warn { "#{item} failed to gather" }
 			end
 		end
-		return @sfobjects
+		@sfobjects
 	end
 
-	def gather_types
+	def metadata_types
 		# We've moved to hardcoding the available metadata types
 		# in application.yml, rather than going after all of them
 		# in every case

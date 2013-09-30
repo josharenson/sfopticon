@@ -4,8 +4,9 @@ require 'fileutils'
 
 class Opticon::Scm::Github
 	attr_accessor :octo, :repo, :config, :repo_path, :path
-	
 
+	# Initialize optionally accepts named options which match the
+	# configuration under the scm sectio of the configuration yaml
 	def initialize(opts = {})
 		raise ArgumentError, "Repository name must be provided" \
 			unless opts.has_key? :repo
@@ -33,15 +34,12 @@ class Opticon::Scm::Github
 		@path = "#{@config.local_path}/#{@config.repo}"
 	end
 
-	def git_init
-		@log.debug { "Initializing git directory at #{@path}" }
-		Git.init(@path)
-	end
-
+	# True if remote repo exists.
 	def repo_exists?
 		!!@repo
 	end
 
+	# Creates a remote repository on GitHub
 	def create_repo
 		@log.info { "Creating repository #{@repo_path}" }
 		@log.debug { "RepoExists: #{repo_exists?}"}
@@ -49,33 +47,14 @@ class Opticon::Scm::Github
 			@log.debug { "Repository #{@repo_path} found." }
 		else
 			@log.debug { "Executing @octo.create_repo('#{@config.repo}')"}
-			@repo = @octo.create_repo(@config.repo)
+			@repo = @octo.create_repo(@config.repo, @config.options)
 			create_master
 		end
 
 		@repo
 	end
 
-	# We have to create a file in order to generate
-	# the initial master branch
-	def create_master(path = @path)
-		@log.info { "Creating master branch at #{path} for #{path} "}
-
-		FileUtils.rm_rf(path)
-		FileUtils.mkdir_p(path)
-		@git = git_init
-		
-		File.open("#{@path}/README", 'w') do |f|
-			f.write("Repository init at #{DateTime.now}")
-		end
-		@git.add(:all => true)
-		@git.commit('Repository Init')
-
-		# Finalize
-		@git.add_remote('origin', @repo_url)
-		@git.push('origin')		
-	end
-
+	# Delete's the Github repository
 	def delete_repo
 		@log.info { "Deleting repository #{@repo_path}" }
 		unless repo_exists?
@@ -88,15 +67,57 @@ class Opticon::Scm::Github
 		@repo = false
 	end
 
-	def add
+	# Recursively adds all changes to the index
+	def add_changes
 		@git.add(:all => true)
 	end
 
-	def delete
+	# Deletes a file (or list of files) from the local working
+	# directory
+	# Params:
+	#  file | [list,of,files]
+	def delete(file)
+		fileList = if file.kind_of? Array
+			file
+		else
+			[file]
+		end
+		@git.rm()
 	end
 
+	# Commit's all indexed changes and pushes to the Github
+	# repository
 	def commit(message = nil)
 		@git.commit(message)
 		@git.push('origin')
 	end
+
+	private
+
+	# Git initializes the local repo directory
+	def init #:doc:
+		@log.debug { "Initializing git directory at #{@path}" }
+		Git.init(@path)
+	end
+
+	# Creates the master branch on Github by adding a README with
+	# the timestamp of creation
+	def create_master(path = @path) #:doc:
+		@log.info { "Creating master branch at #{path} for #{path} "}
+
+		FileUtils.rm_rf(path)
+		FileUtils.mkdir_p(path)
+		@git = init
+		
+		File.open("#{@path}/README", 'w') do |f|
+			f.write("Repository init at #{DateTime.now}")
+		end
+		add_changes
+		@git.commit('Repository Init')
+
+		# Finalize
+		@git.add_remote('origin', @repo_url)
+		@git.push('origin')		
+	end
+
 end
