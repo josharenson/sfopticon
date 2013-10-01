@@ -1,4 +1,4 @@
-class Opticon::Schema::Change < ActiveRecord::Base
+class SfOpticon::Schema::Change < ActiveRecord::Base
   attr_accessible :sfobject_id,
                   :full_name, 
                   :file_name,

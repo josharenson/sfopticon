@@ -1,4 +1,4 @@
-class Opticon
+class SfOpticon
 	# Config
 	require 'rubygems'
 	require 'bundler/setup'
@@ -10,13 +10,13 @@ class Opticon
 	require 'deep_symbolize'
 
 	## Settings needs to be required before any project local libs
-	require 'opticon/settings'
+	require 'sfopticon/settings'
 	## There, now go ahead
 
-	require 'opticon/logger'
-	require 'opticon/db/schema'
-	require 'opticon/scm'
-	require 'opticon/scan'
+	require 'sfopticon/logger'
+	require 'sfopticon/db/schema'
+	require 'sfopticon/scm'
+	require 'sfopticon/scan'
 end
 
 ## Extend hash for deep_symbolize

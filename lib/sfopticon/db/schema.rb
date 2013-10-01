@@ -1,12 +1,12 @@
-class Opticon
+class SfOpticon
 	module Schema
-		require 'opticon/db/models/environments'
-		require 'opticon/db/models/changes'	
-		require 'opticon/db/models/sf_objects'
-		require 'opticon/db/models/changesets'
+		require 'sfopticon/db/models/environments'
+		require 'sfopticon/db/models/changes'	
+		require 'sfopticon/db/models/sf_objects'
+		require 'sfopticon/db/models/changesets'
 	end
 
-	ActiveRecord::Base.establish_connection(Opticon::Settings.database)
+	ActiveRecord::Base.establish_connection(SfOpticon::Settings.database)
 
 	unless ActiveRecord::Base.connection.table_exists? :environments
 		ActiveRecord::Schema.define do

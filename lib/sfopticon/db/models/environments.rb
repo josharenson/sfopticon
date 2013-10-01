@@ -1,7 +1,7 @@
 require 'metaforce'
 require 'fileutils'
 
-class Opticon::Schema::Environment < ActiveRecord::Base
+class SfOpticon::Schema::Environment < ActiveRecord::Base
   validates_uniqueness_of :name, :message => "This organization is already configured."
   attr_accessible :name, 
                   :username, 
@@ -12,8 +12,8 @@ class Opticon::Schema::Environment < ActiveRecord::Base
   has_many :changesets, :dependent => :destroy
 
   def initialize(*args)
-    @log = Opticon::Logger
-    @config = Opticon::Settings.salesforce
+    @log = SfOpticon::Logger
+    @config = SfOpticon::Settings.salesforce
     super(*args)
   end
 
@@ -25,7 +25,7 @@ class Opticon::Schema::Environment < ActiveRecord::Base
 
     # Discard the org contents.
     begin
-      FileUtils.remove_dir("#{Opticon::Settings.scm.local_path}/#{name}")
+      FileUtils.remove_dir("#{SfOpticon::Settings.scm.local_path}/#{name}")
     rescue Errno::ENOENT
       # We pass if the directory is already gone
     end
@@ -37,7 +37,7 @@ class Opticon::Schema::Environment < ActiveRecord::Base
     unless @client
         Metaforce.configure do |c|
           c.host = 'test.salesforce.com' unless self[:production]
-          c.log = Opticon::Logger
+          c.log = SfOpticon::Logger
         end
 
         @client = Metaforce::Metadata::Client.new :username => self[:username], 
@@ -55,8 +55,8 @@ class Opticon::Schema::Environment < ActiveRecord::Base
   # If this isn't a production org, then we're going to want to branch from the
   # production org.
   def init
-    @scm = Opticon::Scm.new(:repo => name)
-    scanner = Opticon::Scan.new(self)
+    @scm = SfOpticon::Scm.new(:repo => name)
+    scanner = SfOpticon::Scan.new(self)
     scanner.snapshot    
 
     if production
@@ -103,16 +103,16 @@ class Opticon::Schema::Environment < ActiveRecord::Base
 
   ## Generates a package.xml string of all objects on org
   def snapshot_manifest
-    Opticon::Schema::Environment.manifest(sf_objects)
+    SfOpticon::Schema::Environment.manifest(sf_objects)
   end
 
   ## Generates a destructuve package.xml based on the changeset
   def destructive_manifest
-    Opticon::Schema::Environment.manifest(changes.where("change_type = 'DEL'"))
+    SfOpticon::Schema::Environment.manifest(changes.where("change_type = 'DEL'"))
   end
 
   ## Generates an additive package.xml based on the changeset
   def productive_manifest
-    Opticon::Schema::Environment.manifest(changes.where("change_type = 'ADD' or change_type = 'MOD'"))
+    SfOpticon::Schema::Environment.manifest(changes.where("change_type = 'ADD' or change_type = 'MOD'"))
   end  
 end

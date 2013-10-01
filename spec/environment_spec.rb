@@ -3,18 +3,18 @@ require 'spec_helper'
 HTTPI.log = false
 Savon.configure {|c| c.log = false }
 
-describe Opticon::Schema::Environment do
+describe SfOpticon::Schema::Environment do
 	before(:each) do
-		@empty_env = Opticon::Schema::Environment.new
-		@prod = Opticon::Schema::Environment.first()
+		@empty_env = SfOpticon::Schema::Environment.new
+		@prod = SfOpticon::Schema::Environment.first()
 	end
 
 	context "Production environment creation" do
 		it "should create a production environment", :create_prod do
-			@prod = Opticon::Schema::Environment.create(
+			@prod = SfOpticon::Schema::Environment.create(
 						:name => 'SPEC-Production',
-				    	:username => Opticon::Settings.test.username,
-						:password => Opticon::Settings.test.password,
+				    	:username => SfOpticon::Settings.test.username,
+						:password => SfOpticon::Settings.test.password,
 						:production => true)
 			@prod.id.should_not be_nil
 		end
@@ -47,6 +47,6 @@ describe Opticon::Schema::Environment do
 
 	# Tear down the production environment
 	after(:all) do
-		Opticon::Schema::Environment.find_by_production(true).remove()
+		SfOpticon::Schema::Environment.find_by_production(true).remove()
 	end
 end

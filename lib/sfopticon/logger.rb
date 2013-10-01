@@ -1,7 +1,7 @@
 require 'logger'
 
-class Opticon::Logger
-	c = Opticon::Settings.logging
+class SfOpticon::Logger
+	c = SfOpticon::Settings.logging
 
 	logdev = case c.logdev
 		when "STDERR", "", nil

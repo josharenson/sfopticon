@@ -1,11 +1,11 @@
 require 'spec_helper'
 
-describe Opticon::Scm do
+describe SfOpticon::Scm do
 	before(:all) do
 		# We ensure this is done only once, since the values are
 		# merged into the Settings singleton
 		@repo_name = "SPEC-OPTICON-Salesforce"
-		@scm = Opticon::Scm.new(:repo => @repo_name)
+		@scm = SfOpticon::Scm.new(:repo => @repo_name)
 	end
 
 	def clear_local_path

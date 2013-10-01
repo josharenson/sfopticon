@@ -1,26 +1,26 @@
 require 'extlib'
 
-class Opticon::Scan
+class SfOpticon::Scan
 	def initialize(env, type = nil)
 		@env = env
 		@client = env.client
-		@log = Opticon::Logger
+		@log = SfOpticon::Logger
 		@type = type
 	end
 
 	def snapshot
 		## Env has to have it's current sf_objects wiped out
 		@log.info { "Deleting all sfobjects for #{@env.name}" }
-		Opticon::Schema::SfObject.where(:environment_id => @env.id).delete_all()
+		SfOpticon::Schema::SfObject.where(:environment_id => @env.id).delete_all()
 
 		@log.info { "Deleting logged changes for #{@env.name}" }
-		Opticon::Schema::Changeset.where(:environment_id => @env.id).destroy_all()
+		SfOpticon::Schema::Changeset.where(:environment_id => @env.id).destroy_all()
 
 		gather_metadata
 		
-		Opticon::Schema::SfObject.transaction do
+		SfOpticon::Schema::SfObject.transaction do
 			@sfobjects.each do |o|
-				@env.sf_objects << Opticon::Schema::SfObject.create(o)
+				@env.sf_objects << SfOpticon::Schema::SfObject.create(o)
 			end
 			@env.save!
 		end
@@ -37,13 +37,13 @@ class Opticon::Scan
 		else
 			orig = @env.sf_objects
 		end
-		@changes = Opticon::Diff.diff(orig, @sfobjects)
+		@changes = SfOpticon::Diff.diff(orig, @sfobjects)
 
-		Opticon::Schema::Changeset.transaction do
-			@changeset = Opticon::Schema::Changeset.new
+		SfOpticon::Schema::Changeset.transaction do
+			@changeset = SfOpticon::Schema::Changeset.new
 			@changeset.environment = @env				
 			@changes.each do |c|
-				change = Opticon::Schema::Change.create_as(c[:object], c[:type])
+				change = SfOpticon::Schema::Change.create_as(c[:object], c[:type])
 				@changeset.changes << change
 
 				case c[:type]
@@ -62,7 +62,7 @@ class Opticon::Scan
 
 	def gather_metadata
 		@sfobjects = []
-		mg = Opticon::Schema::SfObject
+		mg = SfOpticon::Schema::SfObject
 
 		types = if(@type)
 			[@type]
@@ -94,7 +94,7 @@ class Opticon::Scan
 		# We've moved to hardcoding the available metadata types
 		# in application.yml, rather than going after all of them
 		# in every case
-		@names = Opticon::Settings.salesforce.metadata_types
+		@names = SfOpticon::Settings.salesforce.metadata_types
 		@names
 	end
 end

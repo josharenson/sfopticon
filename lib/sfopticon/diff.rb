@@ -1,4 +1,4 @@
-class Opticon
+class SfOpticon
 	class Diff
 		def self.diff(orig_snap, new_snap)
 			changes = []

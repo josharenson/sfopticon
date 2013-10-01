@@ -2,7 +2,7 @@ require 'git'
 require 'octokit'
 require 'fileutils'
 
-class Opticon::Scm::Github
+class SfOpticon::Scm::Github
 	attr_accessor :octo, :repo, :config, :repo_path, :path
 
 	# Initialize optionally accepts named options which match the
@@ -11,10 +11,10 @@ class Opticon::Scm::Github
 		raise ArgumentError, "Repository name must be provided" \
 			unless opts.has_key? :repo
 
-		@log = Opticon::Logger
+		@log = SfOpticon::Logger
 
 		## Merge in any specified properties
-		@config = Opticon::Settings.scm
+		@config = SfOpticon::Settings.scm
 		@config.deep_merge! opts
 
 		## Entry point for all things github

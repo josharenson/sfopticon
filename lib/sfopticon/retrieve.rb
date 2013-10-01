@@ -1,4 +1,4 @@
-class Opticon
+class SfOpticon
 	class Retrieve
 		def initialize(env, changesets = [])
 			@env = env

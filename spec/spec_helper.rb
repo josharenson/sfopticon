@@ -1,4 +1,4 @@
-require 'opticon'
+require 'sfopticon'
 require 'fileutils'
 
 RSpec.configure do |c|

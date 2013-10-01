@@ -15,13 +15,13 @@
 # commit:: Commits, and pushes to remote if necessary
 #
 
-class Opticon::Scm
+class SfOpticon::Scm
 	def self.new(*args)
 		adapter_lib = File.dirname(__FILE__) + '/scm/'  \
-		            + Opticon::Settings.scm.adapter \
+		            + SfOpticon::Settings.scm.adapter \
 		            + '.rb'
 		load adapter_lib
-		klass = "Opticon::Scm::#{Opticon::Settings.scm.adapter.capitalize}".constantize
+		klass = "SfOpticon::Scm::#{SfOpticon::Settings.scm.adapter.capitalize}".constantize
 		klass.new(*args)
 	end
 end

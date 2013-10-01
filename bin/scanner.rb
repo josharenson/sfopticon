@@ -3,8 +3,8 @@
 # Custom lib path and lib requires
 $:.unshift File.join(File.dirname(__FILE__), '..')
 $:.unshift File.join(File.dirname(__FILE__), '../lib')
-require 'opticon'
-require 'opticon/db/schema'
+require 'sfopticon'
+require 'sfopticon/db/schema'
 require 'thor'
 
 class ScannerCLI < Thor
@@ -12,8 +12,8 @@ class ScannerCLI < Thor
 	option :org, :type => :string, :required => true
 	option :type, :desc => "The Metadata type to retrieve, defaults to all"
 	def snapshot
-		Opticon::Scan.new(
-			Opticon::Schema::Environment.find_by_name(options[:org]),
+		SfOpticon::Scan.new(
+			SfOpticon::Schema::Environment.find_by_name(options[:org]),
 			options[:type]
 		).snapshot
 	end		
@@ -22,8 +22,8 @@ class ScannerCLI < Thor
 	option :org, :type => :string, :required => true
 	option :type, :desc => "The Metadata type to retrieve, defaults to all"	
 	def changeset
-		Opticon::Scan.new(
-			Opticon::Schema::Environment.find_by_name(options[:org]),
+		SfOpticon::Scan.new(
+			SfOpticon::Schema::Environment.find_by_name(options[:org]),
 			options[:type]
 		).changeset
 	end
@@ -31,7 +31,7 @@ class ScannerCLI < Thor
 	desc "manifest", "Generate the complete manifest of the Salesforce organization"
 	option :org, :type => :string, :required => true
 	def manifest
-		puts Opticon::Schema::Environment.find_by_name(options[:org]).snapshot_manifest
+		puts SfOpticon::Schema::Environment.find_by_name(options[:org]).snapshot_manifest
 	end
 end
 
