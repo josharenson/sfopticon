@@ -5,11 +5,10 @@ class SfOpticon::Schema::Environment < ActiveRecord::Base
   validates_uniqueness_of :name, :message => "This organization is already configured."
   attr_accessible :name, 
                   :username, 
-                  :password, 
+                  :password,
                   :production
                 
   has_many :sf_objects, :dependent => :destroy
-  has_many :changesets, :dependent => :destroy
 
   def initialize(*args)
     @log = SfOpticon::Logger
@@ -21,7 +20,6 @@ class SfOpticon::Schema::Environment < ActiveRecord::Base
     # We skip the instantiation and go straight to single
     # statement deletion
     sf_objects.delete_all
-    changesets.delete_all
 
     # Discard the org contents.
     begin
@@ -53,7 +51,7 @@ class SfOpticon::Schema::Environment < ActiveRecord::Base
   # and empty.
   # 
   # If this isn't a production org, then we're going to want to branch from the
-  # production org.
+  # production org instead.
   def init
     @scm = SfOpticon::Scm.new(:repo => name)
     scanner = SfOpticon::Scan.new(self)
@@ -61,7 +59,7 @@ class SfOpticon::Schema::Environment < ActiveRecord::Base
 
     if production
       init_production
-      retrieve_full_org    
+      retrieve(manifest())   
       @scm.add_changes
       @scm.commit("Initial push of production code")
     else
@@ -69,12 +67,15 @@ class SfOpticon::Schema::Environment < ActiveRecord::Base
     end
   end
 
-  def retrieve_full_org
-    manifest = self.class.generate_manifest(sf_objects)
-    @log.debug { "Retrieving #{manifest.keys.join(',')}" }
-    @client.retrieve_unpackaged(manifest)
+  # Retrieves the Salesforce Metadata objects according to the Metaforce::Manifest given.
+  # If no Metaforce::Manifest is given then it attempts to retrieve the entire org according
+  # to the latest snapshot.
+  def retrieve(mf)
+    mf ||= manifest
+    @log.debug { "Retrieving #{mf.keys.join(',')}" }
+    @client.retrieve_unpackaged(mf)
            .extract_to(@scm.path)
-           .perform
+           .perform    
   end
 
   def init_production
@@ -84,35 +85,23 @@ class SfOpticon::Schema::Environment < ActiveRecord::Base
   def init_branch
   end
 
-  def self.generate_manifest(object_list)
-    manifest = {}
+  # Generates a Metaforce::Manifest based on the list of objects
+  # given. The objects must match type SfOpticon::Schema::SfObject
+  # Params:
+  # <object_list>:: Optional parameter. If not provided then it will
+  # be the full manifest for this environment.
+  def manifest(object_list = nil)
+    object_list ||= sf_objects
+    mf = {}
     object_list.each do |sf_object|
       sym = sf_object[:object_type].snake_case.to_sym
-      if not manifest.has_key? sym
-        manifest[sym] = []
+      if not mf.has_key? sym
+        mf[sym] = []
       end
 
-      manifest[sym].push(sf_object[:full_name])
+      mf[sym].push(sf_object[:full_name])
     end
-    return Metaforce::Manifest.new(manifest)
-  end    
 
-  def self.manifest(object_list)
-    Metaforce::Manifest.new(self.generate_manifest(object_list)).to_xml    
+    Metaforce::Manifest.new(mf)
   end
-
-  ## Generates a package.xml string of all objects on org
-  def snapshot_manifest
-    SfOpticon::Schema::Environment.manifest(sf_objects)
-  end
-
-  ## Generates a destructuve package.xml based on the changeset
-  def destructive_manifest
-    SfOpticon::Schema::Environment.manifest(changes.where("change_type = 'DEL'"))
-  end
-
-  ## Generates an additive package.xml based on the changeset
-  def productive_manifest
-    SfOpticon::Schema::Environment.manifest(changes.where("change_type = 'ADD' or change_type = 'MOD'"))
-  end  
 end

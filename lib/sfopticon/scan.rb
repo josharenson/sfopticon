@@ -13,9 +13,6 @@ class SfOpticon::Scan
 		@log.info { "Deleting all sfobjects for #{@env.name}" }
 		SfOpticon::Schema::SfObject.where(:environment_id => @env.id).delete_all()
 
-		@log.info { "Deleting logged changes for #{@env.name}" }
-		SfOpticon::Schema::Changeset.where(:environment_id => @env.id).destroy_all()
-
 		gather_metadata
 		
 		SfOpticon::Schema::SfObject.transaction do
