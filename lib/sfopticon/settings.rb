@@ -12,5 +12,9 @@ class SfOpticon::Settings < Settingslogic
 	if File.exist? 'application_local.yml'
 		instance.deep_merge!(new('application_local.yml'))
 	end
-	load!
+	begin
+	  load!
+	rescue SyntaxError
+	  abort "Syntax error in settings file " + source + ". Please verify configuration settings."
+	end
 end
