@@ -17,6 +17,11 @@ class SfOpticon::Schema::Environment < ActiveRecord::Base
     super(*args)
   end
 
+  # Provide access to the SCM instance. 
+  def scm
+    @scm ||= SfOpticon::Scm.new(:repo => name)
+  end
+
   # Removes all sf_objects (via delete_all to avoid instantiation cost), the
   # local repo directory, and itself. This does *not* remove any remote repos!
   def remove
@@ -34,7 +39,6 @@ class SfOpticon::Schema::Environment < ActiveRecord::Base
     delete
   end
 
-  ##--- TODO: Much of this logic should live in the SCM class
   #### Init the repository
   # If this is the initial setup of the production system we'll want an empty
   # repository. The repository will need to be configured on the remote server
@@ -43,14 +47,14 @@ class SfOpticon::Schema::Environment < ActiveRecord::Base
   # If this isn't a production org, then we're going to want to branch from the
   # production org instead.
   def init
-    @scm = SfOpticon::Scm.new(:repo => name)
-    snapshot    
+    snapshot
 
     if production
       init_production
-      retrieve(@sforce.manifest(sf_objects))   
-      @scm.add_changes
-      @scm.commit("Initial push of production code")
+      @sforce.retrieve :manifest => @sforce.manifest(sf_objects),
+                       :extract_to => scm.path
+      scm.add_changes
+      scm.commit("Initial push of production code")
     else
       init_branch
     end
@@ -71,19 +75,8 @@ class SfOpticon::Schema::Environment < ActiveRecord::Base
     end
   end
 
-
-  ##--- TODO: This logic should live in SfOpticon::Salesforce
-  # Retrieves the Salesforce Metadata objects according to the Metaforce::Manifest given.
-  # If no Metaforce::Manifest is given then it attempts to retrieve the entire org according
-  # to the latest snapshot.
-  def retrieve(mf)
-    mf ||= @sforce.manifest(sf_objects)
-    @log.debug { "Retrieving #{mf.keys.join(',')}" }
-    @sforce.client.retrieve_unpackaged(mf).extract_to(@scm.path).perform    
-  end
-
   def init_production
-    @scm.create_repo
+    scm.create_repo
   end
 
   def init_branch
