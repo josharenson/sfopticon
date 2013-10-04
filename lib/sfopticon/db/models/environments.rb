@@ -44,8 +44,7 @@ class SfOpticon::Schema::Environment < ActiveRecord::Base
   # production org instead.
   def init
     @scm = SfOpticon::Scm.new(:repo => name)
-    scanner = SfOpticon::Scan.new(self)
-    scanner.snapshot    
+    snapshot    
 
     if production
       init_production
@@ -54,6 +53,21 @@ class SfOpticon::Schema::Environment < ActiveRecord::Base
       @scm.commit("Initial push of production code")
     else
       init_branch
+    end
+  end
+
+  # Create's a clean snapshot of all SF metadata related to the
+  # configured types.
+  def snapshot
+    ## Env has to have it's current sf_objects wiped out
+    @log.info { "Deleting all sfobjects for #{name}" }
+    sf_objects.delete_all
+    
+    SfOpticon::Schema::SfObject.transaction do
+      @sforce.gather_metadata.each do |o|
+        sf_objects << SfOpticon::Schema::SfObject.create(o)
+      end
+      save!
     end
   end
 

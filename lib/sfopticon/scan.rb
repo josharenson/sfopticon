@@ -9,21 +9,6 @@ class SfOpticon::Scan
 		@type = type
 	end
 
-	def snapshot
-		## Env has to have it's current sf_objects wiped out
-		@log.info { "Deleting all sfobjects for #{@env.name}" }
-		SfOpticon::Schema::SfObject.where(:environment_id => @env.id).delete_all()
-
-		sfobjects = @sforce.gather_metadata
-		
-		SfOpticon::Schema::SfObject.transaction do
-			sfobjects.each do |o|
-				@env.sf_objects << SfOpticon::Schema::SfObject.create(o)
-			end
-			@env.save!
-		end
-	end
-
 	def changeset
 		@sforce.gather_metadata
 
