@@ -16,8 +16,6 @@ class SfOpticon
 	require 'sfopticon/logger'
 	require 'sfopticon/db/schema'
 	require 'sfopticon/scm'
+	require 'sfopticon/salesforce'
 	require 'sfopticon/scan'
 end
-
-## Extend hash for deep_symbolize
-class Hash; include DeepSymbolizable; end
