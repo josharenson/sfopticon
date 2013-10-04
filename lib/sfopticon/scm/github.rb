@@ -82,8 +82,21 @@ class SfOpticon::Scm::Github
 		else
 			[file]
 		end
-		@git.rm()
+		@git.remove(fileList)
 	end
+
+	# Renames a file
+	def rename(src,dst)
+		@git.remove(src)
+		@git.add(dst)
+	end
+
+	# Adds a file to the tree at the specified location
+	def add(src, dst)
+		FileUtils.cp(src, dst)
+		@git.add(dst)
+	end
+	alias_method :modify, :add
 
 	# Commit's all indexed changes and pushes to the Github
 	# repository

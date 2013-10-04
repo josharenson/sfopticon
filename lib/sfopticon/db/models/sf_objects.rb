@@ -10,9 +10,13 @@ class SfOpticon::Schema::SfObject < ActiveRecord::Base
     self.assign_attributes(SfOpticon::Schema::SfObject.map_fields_from_sf(sfobject), 
                            :without_protection => true)
   end
+
+  def clobber(sfobject)
+    self.assign_attributes(sfobject, :without_protection => true)
+  end
   
   def self.map_fields_from_sf(sfobject)
-    sfcopy = sfobject
+    sfcopy = sfobject.clone
     sfcopy[:sfobject_id] = sfcopy[:id]
     sfcopy[:object_type] = sfcopy[:type]
     sfcopy.delete(:id)

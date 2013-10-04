@@ -75,6 +75,66 @@ class SfOpticon::Schema::Environment < ActiveRecord::Base
     end
   end
 
+  # Generates a changeset from the latest snapshot and the current
+  # metadata information from Salesforce. This changeset is then
+  # committed to both the database and the repository.
+  #
+  # Returns the changeset
+  def changeset
+    curr_snap = @sforce.gather_metadata.map {|obj| 
+      SfOpticon::Schema::SfObjects.map_fields_from_sf(obj)
+    }
+    diff = SfOpticon::Diff.diff(sf_objects, curr_snap)
+    # We now have an array of objects that have been deleted, renamed, added,
+    # or modified in the correct order. We will replay these changes into the
+    # local repository and the database.
+
+    # First we have to generate a manifest of the additions and modifications
+    # to retrieve those new objects
+    mods = diff.select {|x|
+      x[:type] == :add || x[:type] == :modify
+    }.map {|x| x[:object] }
+
+    # Retrieve the changes into a temporary directory
+    dir = Dir.mktmpdir("changeset")
+    @sforce.retrieve(:manifest => manifest, :extract_to => dir)
+
+    # Now we replay the changes into the repo and the database
+    diff.each do |change|
+      @log.info { "DIFF: #{change[:type]} - #{change[:object][:full_name]}" }
+
+      case change[:type]
+      when :delete
+        scm.delete(change[:object][:file_name])
+        sf_objects
+          .find_by_sfobject_id(change[:object][:sfobject_id])
+          .delete()
+
+      when :rename
+        scm.rename(change[:old_object][:file_name], change[:object][:file_name])
+        sf_objects
+          .find_by_sfobject_id(change[:old_object][:sfobject_id])
+          .clobber(change[:object])
+
+      when :add
+        scm.add("#{dir}/#{change[:object][:file_name]}",change[:object][:file_name])
+        sf_objects << change[:object]
+
+      when :modify
+        scm.modify("#{dir}/#{change[:object][:file_name]}",change[:object][:file_name])
+        sf_objects
+          .find_by_sfobject_id(change[:object][:sfobject_id])
+          .clobber(change[:object])
+
+      end
+    end
+    save!
+    FileUtils.remove_entry_secure(dir)
+
+    @log.info { "Complete." }
+    diff
+  end
+
   def init_production
     scm.create_repo
   end

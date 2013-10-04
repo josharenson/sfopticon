@@ -90,7 +90,7 @@ class EnvironmentCLI < Thor
 		end
 
 		# If no production environment exists then we must create that first
-		unless options[:production] and not SfOpticon::Schema::Environment.find_by_production(true)
+		if not options[:production] and not SfOpticon::Schema::Environment.find_by_production(true)
 			puts "A production environment must be configured"
 			exit
 		end

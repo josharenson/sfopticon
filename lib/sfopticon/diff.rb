@@ -41,15 +41,19 @@ class SfOpticon
 					puts "#{key} has been modified"
 					if o_full_name != n_full_name || o_file_name != n_file_name
 						puts "#{key} has been renamed"
-						changes.push({:object => orig_snap_ids[key], :type => :delete})
-						changes.push({:object => new_snap_ids[key], :type => :add})						
+						changes.push({ :old_object => orig_snap_ids[key], 
+							           :type => :rename, 
+							           :object => new_snap_ids[key] })
 					else
 						changes.push({:object => new_snap_ids[key], :type => :modify})
 					end
 				end
 			end
 
-			return changes
+			# The changes will be sorted by their timestamp
+			return changes.sort {|x,y|
+				x[:object][:last_modified_date] <=> y[:object][:last_modified_date]
+			}
 		end
 	end
 end
