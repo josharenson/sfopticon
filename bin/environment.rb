@@ -24,6 +24,9 @@ class EnvironmentCLI < Thor
 	desc "describe", "Displays the Salesforce organization's configuration"
 	def describe
 		env = SfOpticon::Schema::Environment.find_by_name(options[:org])
+                if env.nil?
+                  abort "Environment \"" + options[:org] + "\" not found."
+                end
 		puts " Environment ID #{env.id}"
 		puts "-----------------------------------------------"
 		puts "       Name: #{env.name}"
@@ -64,6 +67,9 @@ class EnvironmentCLI < Thor
 	desc "update", "Update the configuration of an existing Salesforce organization"
 	def update
 		env = SfOpticon::Schema::Environment.find_by_name(options[:org])
+                if env.nil?
+                  abort "Environment \"" + options[:org] + "\" not found."
+                end
 		options.keys.select {|x| x != 'org' }.each do |key|
 			env[key] = options[key]
 			puts "#{key.to_s.capitalize} set to #{options[key]}"
