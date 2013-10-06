@@ -1,5 +1,8 @@
 require 'logger'
 
+# Singleton logging class subclassed from Ruby's
+# built-in Logger
+
 class SfOpticon::Logger
 	c = SfOpticon::Settings.logging
 
