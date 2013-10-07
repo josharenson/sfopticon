@@ -1,5 +1,7 @@
 # @abstract Abstract/Base class for all Scm adapters.
 class SfOpticon::Scm::Base
+	# @todo Actually implement the file-based methods which will be nearly
+	#     universal across SCM implementations
 
 	##
 	# Adds a file to the local repository.
