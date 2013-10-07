@@ -7,10 +7,12 @@ require 'yaml'
 ## or local db setttings in the application_local.yml file.
 class Hash; include DeepSymbolizable; end
 class SfOpticon::Settings < Settingslogic
-	source 'application.yml'
+	config_file = File.join($root, 'application.yml')
+	override_file = File.join($root, 'application_local.yml')
+	source config_file
 
-	if File.exist? 'application_local.yml'
-		instance.deep_merge!(new('application_local.yml'))
+	if File.exist? override_file
+		instance.deep_merge!(new(override_file))
 	end
 	begin
 	  load!

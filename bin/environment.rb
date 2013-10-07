@@ -2,6 +2,8 @@
 
 require 'thor'
 
+$root = File.join(File.dirname(__FILE__), '..')
+
 # Custom lib path and lib requires
 $:.unshift File.join(File.dirname(__FILE__), '..')
 $:.unshift File.join(File.dirname(__FILE__), '../lib')
