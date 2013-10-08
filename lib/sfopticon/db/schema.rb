@@ -4,9 +4,15 @@ class SfOpticon
 		require 'sfopticon/db/models/sf_objects'
 	end
 
-	ActiveRecord::Base.establish_connection(SfOpticon::Settings.database)
+	conn = ActiveRecord::Base.establish_connection(SfOpticon::Settings.database)
 
-	unless ActiveRecord::Base.connection.table_exists? :environments
+  if not conn.connected?
+    adapter = SfOpticon::Settings.database.adapter
+    database = SfOpticon::Settings.database.database
+    abort "Could not connect to local database. Ensure a " + adapter + " is running with a database named " + database
+  end
+
+  unless ActiveRecord::Base.connection.table_exists? :environments
 		ActiveRecord::Schema.define do
 			create_table "environments", :force => true do |t|
 				t.string   "name", :unique => true, :null => false
