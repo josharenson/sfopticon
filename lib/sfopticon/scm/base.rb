@@ -1,8 +1,7 @@
-# @baseclass Abstract/Base class for all Scm adapters.
-class SfOpticon::Scm::Base
-	# @todo Actually implement the file-based methods which will be nearly
-	#     universal across SCM implementations
+require 'fileutils'
 
+# @abstract Abstract/Base class for all Scm adapters.
+class SfOpticon::Scm::Base
 	##
 	# Adds a file to the local repository. 
 	# @note Reraises IO exceptions.
@@ -12,12 +11,13 @@ class SfOpticon::Scm::Base
 	#    relative to the base of the repository.
 	# @return [Boolean] True if successful, false otherwise.
 	def add_file(src,dst)
-		raise NotImplementedError
+		FileUtils.cp(src, File.join(@path, dst))
 	end
 
 	##
 	# Clobbers a file in the local repository with the supplied 
-	# src file. 
+	# src file. This exists because SCM systems such as ClearCase will 
+	# require that you checkout a file prior to editing it.
 	# @note (see #add_file)
 	#
 	# @param src [String] The path to the local file
@@ -25,7 +25,7 @@ class SfOpticon::Scm::Base
 	#    relative to the base of the repository.
 	# @return (see #add_file)
 	def clobber_file(src,dst)
-		raise NotImplementedError
+		add_file(src,dst)
 	end
 
 	##
@@ -35,7 +35,7 @@ class SfOpticon::Scm::Base
 	#    repository, in the local repo.
 	# @return (see #add_file)
 	def delete_file(path)
-		raise NotImplementedError
+		FileUtils.remove_entry_secure(File.join(@path, path))
 	end
 
 	##
@@ -48,7 +48,7 @@ class SfOpticon::Scm::Base
 	#    to the base of the repository
 	# @return (see #add_file)
 	def rename_file(src, dst)
-		raise NotImplementedError
+		FileUtils.move(src, File.join(@path, dst))
 	end
 
 	##
@@ -97,6 +97,7 @@ class SfOpticon::Scm::Base
 	end
 
 	##
+	# Constructor.
 	# Creates the remote repository. All configuration is taken from the application
 	# configuration, allowing for overrides passed after the name parameter.
 	#
@@ -108,6 +109,7 @@ class SfOpticon::Scm::Base
 	end
 
 	##
+	# Constructor.
 	# Creates a branch from HEAD, which represents the production Salesforce org.
 	# All configuration is taken from the application configuration.
 	# 
