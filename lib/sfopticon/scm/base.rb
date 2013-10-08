@@ -2,8 +2,20 @@ require 'fileutils'
 
 # @abstract Somewhat abstract base class for all Scm adapters.
 class SfOpticon::Scm::Base
+	#@!attribute local_path 
+	#   @return [String] the fully-qualified path to the repository working tree
+	#@!attribute repo_name
+	#   @return [String] the name of the repository
+	#@!attribute config
+	#   @return [Hash] the configuration section of the application.yml, plus
+	#       any options merged in at construction.
+
+	attr_accessible :local_path,
+	                :repo_name,
+	                :config
+
 	##
-	# initialize needs to take an optional hash in order to override
+	# Initialize needs to take an optional hash in order to override
 	# application configuration.
 	#
 	# @param opts [Hash] Options to override the scm config in application.yml
@@ -20,7 +32,7 @@ class SfOpticon::Scm::Base
 	#    relative to the base of the repository.
 	# @return [Boolean] True if successful, false otherwise.
 	def add_file(src,dst)
-		FileUtils.cp(src, File.join(@path, dst))
+		FileUtils.cp(src, File.join(@local_path, dst))
 	end
 
 	##
@@ -33,8 +45,8 @@ class SfOpticon::Scm::Base
 	# @param dst [String] The destination for the file in the local repo,
 	#    relative to the base of the repository.
 	# @return (see #add_file)
-	def clobber_file(src,dst)
-		add_file(src,dst)
+	def clobber_file(src, dst)
+		add_file(src, File.join(@local_path, dst))
 	end
 
 	##
@@ -44,7 +56,7 @@ class SfOpticon::Scm::Base
 	#    repository, in the local repo.
 	# @return (see #add_file)
 	def delete_file(path)
-		FileUtils.remove_entry_secure(File.join(@path, path))
+		FileUtils.remove_entry_secure(File.join(@local_path, path))
 	end
 
 	##
@@ -57,7 +69,7 @@ class SfOpticon::Scm::Base
 	#    to the base of the repository
 	# @return (see #add_file)
 	def rename_file(src, dst)
-		FileUtils.move(src, File.join(@path, dst))
+		FileUtils.move(src, File.join(@local_path, dst))
 	end
 
 	##
@@ -102,6 +114,14 @@ class SfOpticon::Scm::Base
 	#
 	# @return (see #add_file)
 	def delete_local_repo(repo)
+		raise NotImplementedError
+	end
+
+	##
+	# Returns true if the remote repository exists.
+	#
+	# @return [Boolean]
+	def repo_exists?
 		raise NotImplementedError
 	end
 
