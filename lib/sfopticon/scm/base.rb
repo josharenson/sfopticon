@@ -1,7 +1,16 @@
 require 'fileutils'
 
-# @abstract Abstract/Base class for all Scm adapters.
+# @abstract Somewhat abstract base class for all Scm adapters.
 class SfOpticon::Scm::Base
+	##
+	# initialize needs to take an optional hash in order to override
+	# application configuration.
+	#
+	# @param opts [Hash] Options to override the scm config in application.yml
+	def initialize(opts = {})
+		raise NotImplementedError
+	end
+
 	##
 	# Adds a file to the local repository. 
 	# @note Reraises IO exceptions.
