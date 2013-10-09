@@ -47,7 +47,7 @@ class SfOpticon::Scm::Base
 	#    relative to the base of the repository.
 	# @return (see #add_file)
 	def clobber_file(src, dst)
-		add_file(src, File.join(@local_path, dst))
+		add_file(src, dst)
 	end
 
 	##
@@ -114,8 +114,10 @@ class SfOpticon::Scm::Base
 	# like Subversion should make this a no-op, and perform all commits
 	# in the {#commit} method.
 	#
+	# @param local_branch [String] The name of the local branch to push (optional)
+	# @param remote_branch [String] The name of the remote branch to push into (optional)
 	# @return (see #add_file)
-	def push
+	def push(local_branch = nil, remote_branch = nil)
 		raise NotImplementedError
 	end
 

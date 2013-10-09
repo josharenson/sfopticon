@@ -18,4 +18,5 @@ class SfOpticon
 	require 'sfopticon/scm'
 	require 'sfopticon/scm/base'
 	require 'sfopticon/salesforce'
+	require 'sfopticon/diff'
 end

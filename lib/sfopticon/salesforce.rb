@@ -42,13 +42,9 @@ class SfOpticon::Salesforce
 		types.each do |item|
 			@log.info { "Gathering #{item}" }
 			begin
-				for rec in client.list_metadata item do
+				records = client.list_metadata(item).map {|x| x.symbolize_keys }
+				records.each do |rec|
 					if rec.include?(:full_name) and rec.include?(:last_modified_date)
-						rec[:created_date] = Time.parse(rec[:created_date]).utc
-						rec[:last_modified_date] = Time.parse(rec[:last_modified_date]).utc
-						rec[:sfobject_id] = rec[:id]
-						rec[:object_type] = rec[:type]
-						rec[:environment_id] = @env[:id]
 						@sfobjects << mg.map_fields_from_sf(rec)
 					end
 				end
@@ -57,6 +53,7 @@ class SfOpticon::Salesforce
 			end
 			@log.info { "#{item} complete." }
 		end
+
 		@sfobjects
 	end
 

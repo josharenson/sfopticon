@@ -9,6 +9,7 @@ class SfOpticon::Schema::Environment < ActiveRecord::Base
                   :production
                 
   has_many :sf_objects, :dependent => :destroy
+  after_initialize :after_initialize
 
   def after_initialize
     @log = SfOpticon::Logger
@@ -92,9 +93,7 @@ class SfOpticon::Schema::Environment < ActiveRecord::Base
   #
   # Returns the changeset
   def changeset
-    curr_snap = @sforce.gather_metadata.map {|obj| 
-      SfOpticon::Schema::SfObjects.map_fields_from_sf(obj)
-    }
+    curr_snap = @sforce.gather_metadata
     diff = SfOpticon::Diff.diff(sf_objects, curr_snap)
     # We now have an array of objects that have been deleted, renamed, added,
     # or modified in the correct order. We will replay these changes into the
@@ -108,7 +107,7 @@ class SfOpticon::Schema::Environment < ActiveRecord::Base
 
     # Retrieve the changes into a temporary directory
     dir = Dir.mktmpdir("changeset")
-    @sforce.retrieve(:manifest => manifest, :extract_to => dir)
+    @sforce.retrieve(:manifest => @sforce.manifest(mods), :extract_to => dir)
 
     # Now we replay the changes into the repo and the database
     diff.each do |change|
@@ -116,23 +115,27 @@ class SfOpticon::Schema::Environment < ActiveRecord::Base
 
       case change[:type]
       when :delete
-        scm.delete(change[:object][:file_name])
+        scm.delete_file(change[:object][:file_name])
+        scm.add_changes
         sf_objects
           .find_by_sfobject_id(change[:object][:sfobject_id])
           .delete()
 
       when :rename
-        scm.rename(change[:old_object][:file_name], change[:object][:file_name])
+        scm.rename_file(change[:old_object][:file_name], change[:object][:file_name])
+        scm.add_changes
         sf_objects
           .find_by_sfobject_id(change[:old_object][:sfobject_id])
           .clobber(change[:object])
 
       when :add
-        scm.add("#{dir}/#{change[:object][:file_name]}",change[:object][:file_name])
-        sf_objects << change[:object]
+        scm.add_file("#{dir}/#{change[:object][:file_name]}",change[:object][:file_name])
+        scm.add_changes        
+        sf_objects << sf_objects.new(change[:object])
 
       when :modify
-        scm.modify("#{dir}/#{change[:object][:file_name]}",change[:object][:file_name])
+        scm.clobber_file("#{dir}/#{change[:object][:file_name]}",change[:object][:file_name])
+        scm.add_changes        
         sf_objects
           .find_by_sfobject_id(change[:object][:sfobject_id])
           .clobber(change[:object])
@@ -140,6 +143,8 @@ class SfOpticon::Schema::Environment < ActiveRecord::Base
       end
     end
     save!
+    scm.commit("Changeset commit")
+    scm.push(name,name)
     FileUtils.remove_entry_secure(dir)
 
     @log.info { "Complete." }

@@ -71,8 +71,14 @@ class SfOpticon::Scm::Github < SfOpticon::Scm::Base
 		@git.commit(message)
 	end
 
-	def push
-		@git.push('origin')
+	def push(local_branch = nil, remote_branch = nil)
+		if local_branch and remote_branch
+			@git.push('origin', "#{local_branch}:#{remote_branch}")
+		elsif local_branch
+			@git.push('origin', local_branch)
+		else
+			@git.push('origin')
+		end
 	end
 
 	def repo_exists?
