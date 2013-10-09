@@ -4,6 +4,9 @@ require 'fileutils'
 
 # @note Please see {SfOpticon::Scm::Base} for documentation
 class SfOpticon::Scm::Github < SfOpticon::Scm::Base
+	#@!attribute repo_url
+	#  @return [String] The full URL to the remote repository
+
 	def self.create_remote_repo(name, opts = {})
 		repo = self.new(name, opts)
 		repo.create_repo
@@ -11,9 +14,12 @@ class SfOpticon::Scm::Github < SfOpticon::Scm::Base
 		repo
 	end
 
-	def self.create_branch(name)
-	end
+	def self.create_branch(production,name)
+		repo = self.new(name)
+		repo.create_branch(production.repo_url)
 
+		repo
+	end
 
 	def initialize(name, opts = {})
 		@repo_name = name
@@ -40,6 +46,7 @@ class SfOpticon::Scm::Github < SfOpticon::Scm::Base
 
 		## Local path
 		@local_path = "#{@config.local_path}/#{@repo_name}"
+		@git = Git.open(@local_path)
 
 		@log.debug {
 			"@repo_url = #{@repo_url}
@@ -78,6 +85,14 @@ class SfOpticon::Scm::Github < SfOpticon::Scm::Base
 		end
 
 		@repo
+	end
+
+	# Creates a branch
+	def create_branch(repo_url)
+		@log.info { "Creating branch #{@name}" }
+		@git = Git.clone(repo_url, @local_path)
+		@git.checkout(@git.branch(name))
+		@git.push('origin', name)
 	end
 
 	# Creates the master branch on Github by adding a README with

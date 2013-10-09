@@ -144,9 +144,10 @@ class SfOpticon::Scm::Base
 	# Creates a branch from HEAD, which represents the production Salesforce org.
 	# All configuration is taken from the application configuration.
 	# 
+	# @param prod [SfOpticon::Scm::Base] The production instance
 	# @param name [String] The name of the branch to create.
 	# @return [SfOpticon::Scm]
-	def self.create_branch(name)
+	def self.create_branch(prod,name)
 		raise NotImplementedError
 	end
 end
