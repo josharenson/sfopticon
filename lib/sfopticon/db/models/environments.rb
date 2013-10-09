@@ -10,11 +10,10 @@ class SfOpticon::Schema::Environment < ActiveRecord::Base
                 
   has_many :sf_objects, :dependent => :destroy
 
-  def initialize(*args)
+  def after_initialize
     @log = SfOpticon::Logger
     @config = SfOpticon::Settings.salesforce
     @sforce = SfOpticon::Salesforce.new(self)
-    super(*args)
   end
 
   # Provide access to the SCM instance. 
