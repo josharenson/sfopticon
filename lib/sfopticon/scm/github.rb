@@ -104,12 +104,23 @@ class SfOpticon::Scm::Github < SfOpticon::Scm::Base
 	def create_branch(repo_url)
 		@log.info { "Creating branch #{@repo_name}" }
 		@git = Git.clone(repo_url, @local_path)
-		@git.branch(@repo_name).in_branch('Branch Init') {
-			update_readme
+
+		# For some reason I can't update an existing file in the in_branch block.
+		# Additionally, this block doesn't actually commit. After the block is complete
+		# you still have to checkout the branch.
+		@git.branch(@repo_name).in_branch('Branch README') {
+			@log.debug { "Updating #{@local_path}/BRANCHREADME"}
+
+			File.open("#{@local_path}/BRANCHREADME", 'w') do |f|
+				f.puts("Branch #{@repo_name} created at #{DateTime.now}")
+			end
 		}
 		@git.checkout(@repo_name)
+		FileUtils.move("#{@local_path}/BRANCHREADME", "#{@local_path}/README")
+		@git.add(:all => true)
+		@git.commit('Branch Init')
 
-		@git.push('origin', @repo_name)
+		@git.push('origin',"#{@repo_name}:#{@repo_name}")
 	end
 
 	# Creates the master branch on Github by adding a README with
@@ -130,9 +141,13 @@ class SfOpticon::Scm::Github < SfOpticon::Scm::Base
 		@git.push		
 	end
 
-	def update_readme
+	def update_readme(msg = nil)
+		@log.debug { "Updating readme file at #{@local_path} #{msg}"}
 		File.open("#{@local_path}/README", 'w') do |f|
 			f.puts("Repository init at #{DateTime.now}")
+			if msg
+				f.puts(msg)
+			end
 		end			
 	end
 end
