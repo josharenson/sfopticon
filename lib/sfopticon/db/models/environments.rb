@@ -19,7 +19,14 @@ class SfOpticon::Schema::Environment < ActiveRecord::Base
 
   # Provide access to the SCM instance. 
   def scm
-    @scm ||= SfOpticon::Scm.new(:repo => name)
+    @scm ||= SfOpticon::Scm.new(name)
+  end
+
+  def init_production
+    @scm = SfOpticon::Scm.adapter.create_remote_repo(name)
+  end
+
+  def init_branch
   end
 
   # Removes all sf_objects (via delete_all to avoid instantiation cost), the
@@ -52,9 +59,10 @@ class SfOpticon::Schema::Environment < ActiveRecord::Base
     if production
       init_production
       @sforce.retrieve :manifest => @sforce.manifest(sf_objects),
-                       :extract_to => scm.path
+                       :extract_to => scm.local_path
       scm.add_changes
       scm.commit("Initial push of production code")
+      scm.push()
     else
       init_branch
     end
@@ -133,12 +141,5 @@ class SfOpticon::Schema::Environment < ActiveRecord::Base
 
     @log.info { "Complete." }
     diff
-  end
-
-  def init_production
-    scm.create_repo
-  end
-
-  def init_branch
   end
 end

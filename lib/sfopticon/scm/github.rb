@@ -2,15 +2,21 @@ require 'git'
 require 'octokit'
 require 'fileutils'
 
-class SfOpticon::Scm::Github
-	attr_accessor :octo, :repo, :config, :repo_path, :path
+# @note Please see {SfOpticon::Scm::Base} for documentation
+class SfOpticon::Scm::Github < SfOpticon::Scm::Base
+	def self.create_remote_repo(name, opts = {})
+		repo = self.new(name, opts)
+		repo.create_repo
 
-	# Initialize optionally accepts named options which match the
-	# configuration under the scm sectio of the configuration yaml
-	def initialize(opts = {})
-		raise ArgumentError, "Repository name must be provided" \
-			unless opts.has_key? :repo
+		repo
+	end
 
+	def self.create_branch(name)
+	end
+
+
+	def initialize(name, opts = {})
+		@repo_name = name
 		@log = SfOpticon::Logger
 
 		## Merge in any specified properties
@@ -19,110 +25,71 @@ class SfOpticon::Scm::Github
 
 		## Entry point for all things github
 		@octo = Octokit::Client.new :login => @config.username,
-			                        :password => @config.password
+		                            :password => @config.password
 
-		## Sure is ugly
-		@repo_url = @config.url.split('//') \
-								.join("//#{@config.username}:#{@config.password}@") \
-								+ "/#{@config.repo}"
-		@repo_clone_url = @repo_url + '.git'
+		# We have to insert the username/password into the URL for
+		# adding the remote
+		@config.url.gsub! /(https?:\/\/)(.*)/,
+		                  "\\1#{@config.username}:#{@config.password}@\\2"
 
+		@repo_url = "#{@config.url}/#{@repo_name}"
 		@repo_path = Octokit::Repository.from_url @repo_url
 		@repo = @octo.repository? @repo_path
 
+
+
 		## Local path
-		@path = "#{@config.local_path}/#{@config.repo}"
+		@local_path = "#{@config.local_path}/#{@repo_name}"
+
+		@log.debug {
+			"@repo_url = #{@repo_url}
+			 @repo_path = #{@repo_path}
+			 @repo = #{@repo}
+			 @local_path = #{@local_path}"
+		}
 	end
 
-	# True if remote repo exists.
+	def add_changes
+		@git.add(:all => true)
+	end
+
+	def commit(message)
+		@git.commit(message)
+	end
+
+	def push
+		@git.push('origin')
+	end
+
 	def repo_exists?
 		!!@repo
 	end
 
 	# Creates a remote repository on GitHub
-	def create_repo
+	def create_repo 
 		@log.info { "Creating repository #{@repo_path}" }
-		@log.debug { "RepoExists: #{repo_exists?}"}
+
 		if repo_exists?
-			@log.debug { "Repository #{@repo_path} found." }
+			@log.debug { "Repository #{@repo_path} found"  }
 		else
-			@log.debug { "Executing @octo.create_repo('#{@config.repo}')"}
-			@repo = @octo.create_repo(@config.repo, @config.options)
+			@log.debug { "Executing @octo.create_repo('#{@repo_name}')"}
+			@repo = @octo.create_repo(@repo_name, @config.options)
 			create_master
 		end
 
 		@repo
 	end
 
-	# Delete's the Github repository
-	def delete_repo
-		@log.info { "Deleting repository #{@repo_path}" }
-		unless repo_exists?
-			@log.debug { "Repository #{@repo_path} not found"}
-			true
-		else
-			@octo.delete_repo(@repo_path)
-		end
-
-		@repo = false
-	end
-
-	# Recursively adds all changes to the index
-	def add_changes
-		@git.add(:all => true)
-	end
-
-	# Deletes a file (or list of files) from the local working
-	# directory
-	# Params:
-	#  file | [list,of,files]
-	def delete(file)
-		fileList = if file.kind_of? Array
-			file
-		else
-			[file]
-		end
-		@git.remove(fileList)
-	end
-
-	# Renames a file
-	def rename(src,dst)
-		@git.remove(src)
-		@git.add(dst)
-	end
-
-	# Adds a file to the tree at the specified location
-	def add(src, dst)
-		FileUtils.cp(src, dst)
-		@git.add(dst)
-	end
-	alias_method :modify, :add
-
-	# Commit's all indexed changes and pushes to the Github
-	# repository
-	def commit(message = nil)
-		@git.commit(message)
-		@git.push('origin')
-	end
-
-	private
-
-	# Git initializes the local repo directory
-	def init #:doc:
-		@log.debug { "Initializing git directory at #{@path}" }
-		Git.init(@path)
-	end
-
 	# Creates the master branch on Github by adding a README with
 	# the timestamp of creation
-	def create_master(path = @path) #:doc:
+	def create_master(path = @local_path)
 		@log.info { "Creating master branch at #{path} for #{path} "}
 
 		FileUtils.rm_rf(path)
 		FileUtils.mkdir_p(path)
-		@git = init
+		@git = Git.init(path)
 		
-		File.open("#{@path}/README", 'w') do |f|
+		File.open("#{@local_path}/README", 'w') do |f|
 			f.write("Repository init at #{DateTime.now}")
 		end
 		add_changes
@@ -130,7 +97,6 @@ class SfOpticon::Scm::Github
 
 		# Finalize
 		@git.add_remote('origin', @repo_url)
-		@git.push('origin')		
+		@git.push		
 	end
-
 end
