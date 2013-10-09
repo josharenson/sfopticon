@@ -1,12 +1,18 @@
+require 'extlib'
+
 # This class performs all of the duties related to the SFDC through
 # the Metaforce gem.
 class SfOpticon::Salesforce
+
+	##
+	# @param env [SfOpticon::Schema::Environment]
 	def initialize(env)
 		@env = env
 		@log = SfOpticon::Logger
 	end
 
-	# Metaforce::Client
+	# @!attribute client
+	#    @return [Metaforce::Metadata::Client]
 	def client
 		unless @client
 			Metaforce.configure do |c|
