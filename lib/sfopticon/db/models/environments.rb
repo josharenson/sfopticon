@@ -27,6 +27,8 @@ class SfOpticon::Schema::Environment < ActiveRecord::Base
   end
 
   def init_branch
+    prod = SfOpticon::Scm.new(self.class.find_by_production(true).name)
+    @scm = SfOpticon::Scm.adapter.create_branch(prod, name)
   end
 
   # Removes all sf_objects (via delete_all to avoid instantiation cost), the
@@ -54,7 +56,9 @@ class SfOpticon::Schema::Environment < ActiveRecord::Base
   # If this isn't a production org, then we're going to want to branch from the
   # production org instead.
   def init
+    @log.info { "Beginning snapshot of #{name}" }
     snapshot
+    @log.info { "Snapshot complete" }
 
     if production
       init_production

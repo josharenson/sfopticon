@@ -55,6 +55,7 @@ class SfOpticon::Salesforce
 			rescue => e
 				@log.warn { "#{item} failed to gather: #{e.message}" }
 			end
+			@log.info { "#{item} complete." }
 		end
 		@sfobjects
 	end

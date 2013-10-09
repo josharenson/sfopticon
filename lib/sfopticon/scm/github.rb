@@ -6,17 +6,20 @@ require 'fileutils'
 class SfOpticon::Scm::Github < SfOpticon::Scm::Base
 	#@!attribute repo_url
 	#  @return [String] The full URL to the remote repository
+	attr_accessor :repo_url
 
 	def self.create_remote_repo(name, opts = {})
+		SfOpticon::Logger.info { "Creating remote repository #{name}" }
 		repo = self.new(name, opts)
 		repo.create_repo
 
 		repo
 	end
 
-	def self.create_branch(production,name)
+	def self.create_branch(prod,name)
+		SfOpticon::Logger.info { "Creating branch #{name} from #{prod.repo_name}"}
 		repo = self.new(name)
-		repo.create_branch(production.repo_url)
+		repo.create_branch(prod.repo_url)
 
 		repo
 	end
@@ -35,10 +38,10 @@ class SfOpticon::Scm::Github < SfOpticon::Scm::Base
 
 		# We have to insert the username/password into the URL for
 		# adding the remote
-		@config.url.gsub! /(https?:\/\/)(.*)/,
-		                  "\\1#{@config.username}:#{@config.password}@\\2"
+		auth_url = @config.url.gsub /(https?:\/\/)(.*)/,
+		                           "\\1#{@config.username}:#{@config.password}@\\2"
 
-		@repo_url = "#{@config.url}/#{@repo_name}"
+		@repo_url = "#{auth_url}/#{@repo_name}"
 		@repo_path = Octokit::Repository.from_url @repo_url
 		@repo = @octo.repository? @repo_path
 
@@ -46,10 +49,14 @@ class SfOpticon::Scm::Github < SfOpticon::Scm::Base
 
 		## Local path
 		@local_path = "#{@config.local_path}/#{@repo_name}"
-		@git = Git.open(@local_path)
+
+		if File.exist? @local_path
+			@git = Git.open(@local_path)
+		end
 
 		@log.debug {
-			"@repo_url = #{@repo_url}
+			"@repo_name = #{@repo_name}
+			 @repo_url = #{@repo_url}
 			 @repo_path = #{@repo_path}
 			 @repo = #{@repo}
 			 @local_path = #{@local_path}"
@@ -89,10 +96,14 @@ class SfOpticon::Scm::Github < SfOpticon::Scm::Base
 
 	# Creates a branch
 	def create_branch(repo_url)
-		@log.info { "Creating branch #{@name}" }
+		@log.info { "Creating branch #{@repo_name}" }
 		@git = Git.clone(repo_url, @local_path)
-		@git.checkout(@git.branch(name))
-		@git.push('origin', name)
+		@git.branch(@repo_name).in_branch('Branch Init') {
+			update_readme
+		}
+		@git.checkout(@repo_name)
+
+		@git.push('origin', @repo_name)
 	end
 
 	# Creates the master branch on Github by adding a README with
@@ -104,14 +115,18 @@ class SfOpticon::Scm::Github < SfOpticon::Scm::Base
 		FileUtils.mkdir_p(path)
 		@git = Git.init(path)
 		
-		File.open("#{@local_path}/README", 'w') do |f|
-			f.write("Repository init at #{DateTime.now}")
-		end
+		update_readme
 		add_changes
 		@git.commit('Repository Init')
 
 		# Finalize
 		@git.add_remote('origin', @repo_url)
 		@git.push		
+	end
+
+	def update_readme
+		File.open("#{@local_path}/README", 'w') do |f|
+			f.puts("Repository init at #{DateTime.now}")
+		end			
 	end
 end
