@@ -10,16 +10,17 @@ class SfOpticon::Scm::Base
 	#   @return [Hash] the configuration section of the application.yml, plus
 	#       any options merged in at construction.
 
-	attr_accessible :local_path,
-	                :repo_name,
-	                :config
+	attr_accessor :local_path,
+	              :repo_name,
+	              :config
 
 	##
 	# Initialize needs to take an optional hash in order to override
 	# application configuration.
 	#
+	# @param name [String] The name of the repo to instantiate
 	# @param opts [Hash] Options to override the scm config in application.yml
-	def initialize(opts = {})
+	def initialize(name, opts = {})
 		raise NotImplementedError
 	end
 
@@ -73,6 +74,18 @@ class SfOpticon::Scm::Base
 	end
 
 	##
+	# Deletes the repository from the local filesystem and freezes the object. 
+	# This method leaves the remote repository fully intact. 
+	#
+	# @note (see #add_file)	
+	#
+	# @return (see #add_file)
+	def delete_local_repo
+		FileUtils.remove_entry_secure(@local_path)
+		freeze
+	end
+
+	##
 	# Adds all changes in the tree to the commit list. For repositories other
 	# than Git this will likely be a no-op
 	#
@@ -102,18 +115,7 @@ class SfOpticon::Scm::Base
 	# in the {#commit} method.
 	#
 	# @return (see #add_file)
-	def push()
-		raise NotImplementedError
-	end
-
-	##
-	# Deletes the repository from the local filesystem and freezes the object. 
-	# This method leaves the remote repository fully intact. 
-	#
-	# @note (see #add_file)	
-	#
-	# @return (see #add_file)
-	def delete_local_repo(repo)
+	def push
 		raise NotImplementedError
 	end
 
