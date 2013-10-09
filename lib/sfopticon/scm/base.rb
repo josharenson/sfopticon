@@ -70,7 +70,7 @@ class SfOpticon::Scm::Base
 	#    to the base of the repository
 	# @return (see #add_file)
 	def rename_file(src, dst)
-		FileUtils.move(src, File.join(@local_path, dst))
+		FileUtils.move(File.join(@local_path, src), File.join(@local_path, dst))
 	end
 
 	##
