@@ -1,6 +1,7 @@
 #!/usr/bin/ruby
 
 require 'thor'
+require 'io/console'
 
 $root = File.join(File.dirname(__FILE__), '..')
 
@@ -81,35 +82,44 @@ class EnvironmentCLI < Thor
 
 	option :name, :type => :string, :required => true
 	option :username, :type => :string, :required => true
-	option :password, :type => :string, :required => true
+	option :password, :type => :string, :required => false
 	option :production, :type => :boolean, :default => false
 	desc "create", "Create a new Salesforce organization"
 	def create
+		opts_copy = options.dup
+
 		# Only 1 production environment
-		if options[:production] and SfOpticon::Schema::Environment.find_by_production(true)
+		if opts_copy[:production] and SfOpticon::Schema::Environment.find_by_production(true)
 			puts "A production environment already exists"
 			exit
 		end
 
 		# If no production environment exists then we must create that first
-		if not options[:production] and not SfOpticon::Schema::Environment.find_by_production(true)
+		if not opts_copy[:production] and not SfOpticon::Schema::Environment.find_by_production(true)
 			puts "A production environment must be configured"
 			exit
 		end
 
-		if SfOpticon::Schema::Environment.find_by_name(options[:name])
-			puts "Salesforce organization #{options[:name]} already exists"
+		if SfOpticon::Schema::Environment.find_by_name(opts_copy[:name])
+			puts "Salesforce organization #{opts_copy[:name]} already exists"
 			exit
 		end
-		env = SfOpticon::Schema::Environment.create(options)
+
+		# Get the password (hidden) if it was not supplied on the cli
+		if not opts_copy[:password]
+			print "Salesforce Password: "
+			opts_copy[:password] = STDIN.noecho(&:gets).chomp
+		end
+
+		env = SfOpticon::Schema::Environment.create(opts_copy)
 		begin
-                  env.init
-                rescue Exception => e
-                  puts "Error creating remote repository. " + e.message
-                  puts "Attempting to rollback local changes..."
-                  SfOpticon::Schema::Environment.destroy(env)
-                  abort "Successfuly rolled back changes."
-                end
+			env.init
+		rescue Exception => e
+			puts "Error creating remote repository. " + e.message
+			puts "Attempting to rollback local changes..."
+			SfOpticon::Schema::Environment.destroy(env)
+			abort "Successfuly rolled back changes."
+		end
 
 		puts "Environment #{env.name} (#{env.username})- Created"
 	end
