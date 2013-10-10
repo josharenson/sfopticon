@@ -112,11 +112,22 @@ class SfOpticon::Schema::Environment < ActiveRecord::Base
     # Now we replay the changes into the repo and the database
     diff.each do |change|
       @log.info { "DIFF: #{change[:type]} - #{change[:object][:full_name]}" }
+      
+      commit_message = "#{change[:type].to_s.capitalize} - #{change[:object][:full_name]}"
+
+      if change[:type] == :delete
+        commit_message = "#{change[:object][:file_name]} deleted"
+      else
+        change[:object].keys.each do |key|
+          commit_message += "#{key.to_s.camelize}: #{change[:object][key]}\n"
+        end
+      end
 
       case change[:type]
       when :delete
         scm.delete_file(change[:object][:file_name])
         scm.add_changes
+        scm.commit(commit_message, change[:object][:last_modified_by_name])
         sf_objects
           .find_by_sfobject_id(change[:object][:sfobject_id])
           .delete()
@@ -124,18 +135,21 @@ class SfOpticon::Schema::Environment < ActiveRecord::Base
       when :rename
         scm.rename_file(change[:old_object][:file_name], change[:object][:file_name])
         scm.add_changes
+        scm.commit(commit_message, change[:object][:last_modified_by_name])        
         sf_objects
           .find_by_sfobject_id(change[:old_object][:sfobject_id])
           .clobber(change[:object])
 
       when :add
         scm.add_file("#{dir}/#{change[:object][:file_name]}",change[:object][:file_name])
-        scm.add_changes        
+        scm.add_changes
+        scm.commit(commit_message, change[:object][:last_modified_by_name])        
         sf_objects << sf_objects.new(change[:object])
 
       when :modify
         scm.clobber_file("#{dir}/#{change[:object][:file_name]}",change[:object][:file_name])
-        scm.add_changes        
+        scm.add_changes
+        scm.commit(commit_message, change[:object][:last_modified_by_name])        
         sf_objects
           .find_by_sfobject_id(change[:object][:sfobject_id])
           .clobber(change[:object])
@@ -143,7 +157,6 @@ class SfOpticon::Schema::Environment < ActiveRecord::Base
       end
     end
     save!
-    scm.commit("Changeset commit")
     scm.push(name,name)
     FileUtils.remove_entry_secure(dir)
 
@@ -151,3 +164,4 @@ class SfOpticon::Schema::Environment < ActiveRecord::Base
     diff
   end
 end
+

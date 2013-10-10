@@ -72,9 +72,17 @@ class SfOpticon::Scm::Github < SfOpticon::Scm::Base
 		@git.add(:all => true)
 	end
 
-	def commit(message)
-		@git.commit(message)
-	end
+        def commit(message, author = nil, author_email = nil)
+                if author
+                        @git.config('user.name', author)
+                end
+
+                if author_email
+                        @git.config('user.email', author_email)
+                end
+
+                @git.commit(message)
+        end
 
 	def push(local_branch = nil, remote_branch = nil)
 		if local_branch and remote_branch

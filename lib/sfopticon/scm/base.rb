@@ -33,6 +33,12 @@ class SfOpticon::Scm::Base
 	#    relative to the base of the repository.
 	# @return [Boolean] True if successful, false otherwise.
 	def add_file(src,dst)
+		base_path = File.dirname(src)
+
+		unless Dir.exist? base_path
+			FileUtils.mkdir_p(base_path)
+		end
+
 		FileUtils.cp(src, File.join(@local_path, dst))
 	end
 
