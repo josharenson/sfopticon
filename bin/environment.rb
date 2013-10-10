@@ -101,9 +101,15 @@ class EnvironmentCLI < Thor
 			puts "Salesforce organization #{options[:name]} already exists"
 			exit
 		end
-
 		env = SfOpticon::Schema::Environment.create(options)
-		env.init
+		begin
+                  env.init
+                rescue Exception => e
+                  puts "Error creating remote repository."
+                  puts "Attempting to rollback local changes."
+                  SfOpticon::Schema::Environment.destroy(env)
+                end
+
 		puts "Environment #{env.name} (#{env.username})- Created"
 	end
 end

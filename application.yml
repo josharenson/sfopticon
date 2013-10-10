@@ -7,14 +7,14 @@ database:
   adapter: mysql2
   encoding: utf8
   database: opticon
-  username: root
-  password:
+  username: 
+  password: 
 
 scm:
   adapter: github
   url: https://github.com/ryanparr
-  username: ryanparr
-  password: *************
+  username: 
+  password: 
   local_path: orgs
   options: # Options specific to this adapter
     description:
@@ -29,11 +29,11 @@ scm:
     gitignore_template:
 
 test:
-  username: ryan.parr@isilon.com
-  password: *********
+  username: 
+  password: 
 
 logging:
-  logdev: debug_log.txt
+  logdev: STDERR
   level: DEBUG
   shift_age: 10
   shift_size: 1048576

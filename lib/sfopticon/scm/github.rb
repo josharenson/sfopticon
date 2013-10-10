@@ -43,7 +43,12 @@ class SfOpticon::Scm::Github < SfOpticon::Scm::Base
 
 		@repo_url = "#{auth_url}/#{@repo_name}"
 		@repo_path = Octokit::Repository.from_url @repo_url
-		@repo = @octo.repository? @repo_path
+		begin
+                  @repo = @octo.repository? @repo_path
+                rescue Exception => e
+                  puts "Please verify your github credentials!"
+                  abort e.message
+                end
 
 
 
