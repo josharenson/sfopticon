@@ -105,9 +105,10 @@ class EnvironmentCLI < Thor
 		begin
                   env.init
                 rescue Exception => e
-                  puts "Error creating remote repository."
-                  puts "Attempting to rollback local changes."
+                  puts "Error creating remote repository. " + e.message
+                  puts "Attempting to rollback local changes..."
                   SfOpticon::Schema::Environment.destroy(env)
+                  abort "Successfuly rolled back changes."
                 end
 
 		puts "Environment #{env.name} (#{env.username})- Created"
