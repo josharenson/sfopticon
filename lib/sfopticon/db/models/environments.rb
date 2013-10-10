@@ -95,6 +95,10 @@ class SfOpticon::Schema::Environment < ActiveRecord::Base
   def changeset
     curr_snap = @sforce.gather_metadata
     diff = SfOpticon::Diff.diff(sf_objects, curr_snap)
+    if diff.size == 0
+      return
+    end
+
     # We now have an array of objects that have been deleted, renamed, added,
     # or modified in the correct order. We will replay these changes into the
     # local repository and the database.

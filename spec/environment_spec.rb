@@ -9,15 +9,15 @@ describe SfOpticon::Schema::Environment do
 		@prod = SfOpticon::Schema::Environment.first()
 	end
 
-	context "Production environment creation" do
-		it "should create a production environment", :create_prod do
-			@prod = SfOpticon::Schema::Environment.create(
-						:name => 'SPEC-Production',
-				    	:username => SfOpticon::Settings.test.username,
-						:password => SfOpticon::Settings.test.password,
-						:production => true)
-			@prod.id.should_not be_nil
-		end
+  context "Production environment creation" do
+    it "should create a production environment", :create_prod do
+      @prod = SfOpticon::Schema::Environment.create(
+          :name => 'SPEC-Production',
+          :username => SfOpticon::Settings.test.username,
+          :password => SfOpticon::Settings.test.password,
+          :production => true)
+      @prod.id.should_not be_nil
+    end
 
 		it "should create the production scm repository and master branch"
 		it "should snapshot production"

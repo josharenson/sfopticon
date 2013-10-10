@@ -4,163 +4,160 @@ require 'fileutils'
 
 # @note Please see {SfOpticon::Scm::Base} for documentation
 class SfOpticon::Scm::Github < SfOpticon::Scm::Base
-	#@!attribute repo_url
-	#  @return [String] The full URL to the remote repository
-	attr_accessor :repo_url
+  #@!attribute repo_url
+  #  @return [String] The full URL to the remote repository
+  attr_accessor :repo_url
 
-	def self.create_remote_repo(name, opts = {})
-		SfOpticon::Logger.info { "Creating remote repository #{name}" }
-		repo = self.new(name, opts)
-		repo.create_repo
+  def self.create_remote_repo(name, opts = {})
+    SfOpticon::Logger.info { "Creating remote repository #{name}" }
+    repo = self.new(name, opts)
+    repo.create_repo
 
-		repo
-	end
+    repo
+  end
 
-	def self.create_branch(prod,name)
-		SfOpticon::Logger.info { "Creating branch #{name} from #{prod.repo_name}"}
-		repo = self.new(name)
-		repo.create_branch(prod.repo_url)
+  def self.create_branch(prod,name)
+    SfOpticon::Logger.info { "Creating branch #{name} from #{prod.repo_name}"}
+    repo = self.new(name)
+    repo.create_branch(prod.repo_url)
 
-		repo
-	end
+    repo
+  end
 
-	def initialize(name, opts = {})
-		@repo_name = name
-		@log = SfOpticon::Logger
+  def initialize(name, opts = {})
+    @repo_name = name
+    @log = SfOpticon::Logger
 
-		## Merge in any specified properties
-		@config = SfOpticon::Settings.scm
-		@config.deep_merge! opts
+    ## Merge in any specified properties
+    @config = SfOpticon::Settings.scm
+    @config.deep_merge! opts
 
-		## Entry point for all things github
-		@octo = Octokit::Client.new :login => @config.username,
-		                            :password => @config.password
+    # Make sure that our local_path exists
+    unless Dir.exist? @config.local_path
+      FileUtils.mkdir_p @config.local_path
+    end    
 
-		# We have to insert the username/password into the URL for
-		# adding the remote
-		auth_url = @config.url.gsub /(https?:\/\/)(.*)/,
-		                           "\\1#{@config.username}:#{@config.password}@\\2"
+    ## Entry point for all things github
+    @octo = Octokit::Client.new :login => @config.username,
+                                :password => @config.password
 
-		@repo_url = "#{auth_url}/#{@repo_name}"
-		@repo_path = Octokit::Repository.from_url @repo_url
-		begin
-                  @repo = @octo.repository? @repo_path
-                rescue Exception => e
-                  puts "Please verify your github credentials!"
-                  abort e.message
-                end
+    # We have to insert the username/password into the URL for
+    # adding the remote
+    auth_url = @config.url.gsub /(https?:\/\/)(.*)/,
+                                "\\1#{@config.username}:#{@config.password}@\\2"
+
+    @repo_url = "#{auth_url}/#{@repo_name}"
+    @repo_path = Octokit::Repository.from_url @repo_url
+    begin
+      @repo = @octo.repository? @repo_path
+    rescue Exception => e
+      puts "Please verify your github credentials!"
+      abort e.message
+    end
 
 
 
-		## Local path
-		@local_path = "#{@config.local_path}/#{@repo_name}"
+    ## Local path
+    @local_path = "#{@config.local_path}/#{@repo_name}"
 
-		if File.exist? @local_path
-			@git = Git.open(@local_path)
-		end
+    if Dir.exist? @local_path
+      @git = Git.open(@local_path)
+    end
+  end
 
-		@log.debug {
-			"@repo_name = #{@repo_name}
-			 @repo_url = #{@repo_url}
-			 @repo_path = #{@repo_path}
-			 @repo = #{@repo}
-			 @local_path = #{@local_path}"
-		}
-	end
+  def add_changes
+    @git.add(:all => true)
+  end
 
-	def add_changes
-		@git.add(:all => true)
-	end
+  def commit(message, author = nil, author_email = nil)
+    if author
+      @git.config('user.name', author)
+    end
 
-        def commit(message, author = nil, author_email = nil)
-                if author
-                        @git.config('user.name', author)
-                end
+    if author_email
+      @git.config('user.email', author_email)
+    end
 
-                if author_email
-                        @git.config('user.email', author_email)
-                end
+    @git.commit(message)
+  end
 
-                @git.commit(message)
-        end
+  def push(local_branch = nil, remote_branch = nil)
+    if local_branch and remote_branch
+      @git.push('origin', "#{local_branch}:#{remote_branch}")
+    elsif local_branch
+      @git.push('origin', local_branch)
+    else
+      @git.push('origin')
+    end
+  end
 
-	def push(local_branch = nil, remote_branch = nil)
-		if local_branch and remote_branch
-			@git.push('origin', "#{local_branch}:#{remote_branch}")
-		elsif local_branch
-			@git.push('origin', local_branch)
-		else
-			@git.push('origin')
-		end
-	end
+  def repo_exists?
+    !!@repo
+  end
 
-	def repo_exists?
-		!!@repo
-	end
+  # Creates a remote repository on GitHub
+  def create_repo
+    @log.info { "Creating repository #{@repo_path}" }
 
-	# Creates a remote repository on GitHub
-	def create_repo 
-		@log.info { "Creating repository #{@repo_path}" }
+    if repo_exists?
+      @log.debug { "Repository #{@repo_path} found"  }
+    else
+      @log.debug { "Executing @octo.create_repo('#{@repo_name}')"}
+      @repo = @octo.create_repo(@repo_name, @config.options)
+      create_master
+    end
 
-		if repo_exists?
-			@log.debug { "Repository #{@repo_path} found"  }
-		else
-			@log.debug { "Executing @octo.create_repo('#{@repo_name}')"}
-			@repo = @octo.create_repo(@repo_name, @config.options)
-			create_master
-		end
+    @repo
+  end
 
-		@repo
-	end
+  # Creates a branch
+  def create_branch(repo_url)
+    @log.info { "Creating branch #{@repo_name}" }
+    @git = Git.clone(repo_url, @local_path)
 
-	# Creates a branch
-	def create_branch(repo_url)
-		@log.info { "Creating branch #{@repo_name}" }
-		@git = Git.clone(repo_url, @local_path)
+    # For some reason I can't update an existing file in the in_branch block.
+    # Additionally, this block doesn't actually commit. After the block is complete
+    # you still have to checkout the branch.
+    @git.branch(@repo_name).in_branch('Branch README') {
+      @log.debug { "Updating #{@local_path}/BRANCHREADME"}
 
-		# For some reason I can't update an existing file in the in_branch block.
-		# Additionally, this block doesn't actually commit. After the block is complete
-		# you still have to checkout the branch.
-		@git.branch(@repo_name).in_branch('Branch README') {
-			@log.debug { "Updating #{@local_path}/BRANCHREADME"}
+      File.open("#{@local_path}/BRANCHREADME", 'w') do |f|
+        f.puts("Branch #{@repo_name} created at #{DateTime.now}")
+      end
+    }
+    @git.checkout(@repo_name)
+    FileUtils.move("#{@local_path}/BRANCHREADME", "#{@local_path}/README")
+    @git.add(:all => true)
+    @git.commit('Branch Init')
 
-			File.open("#{@local_path}/BRANCHREADME", 'w') do |f|
-				f.puts("Branch #{@repo_name} created at #{DateTime.now}")
-			end
-		}
-		@git.checkout(@repo_name)
-		FileUtils.move("#{@local_path}/BRANCHREADME", "#{@local_path}/README")
-		@git.add(:all => true)
-		@git.commit('Branch Init')
+    @git.push('origin',"#{@repo_name}:#{@repo_name}")
+  end
 
-		@git.push('origin',"#{@repo_name}:#{@repo_name}")
-	end
+  # Creates the master branch on Github by adding a README with
+  # the timestamp of creation
+  def create_master(path = @local_path)
+    @log.info { "Creating master branch at #{path} for #{path} "}
 
-	# Creates the master branch on Github by adding a README with
-	# the timestamp of creation
-	def create_master(path = @local_path)
-		@log.info { "Creating master branch at #{path} for #{path} "}
+    FileUtils.rm_rf(path)
+    FileUtils.mkdir_p(path)
+    @git = Git.init(path)
 
-		FileUtils.rm_rf(path)
-		FileUtils.mkdir_p(path)
-		@git = Git.init(path)
-		
-		update_readme
-		add_changes
-		@git.commit('Repository Init')
+    update_readme
+    add_changes
+    @git.commit('Repository Init')
 
-		# Finalize
-		@git.add_remote('origin', @repo_url)
-		@git.push		
-	end
+    # Finalize
+    @git.add_remote('origin', @repo_url)
+    @git.push
+  end
 
-	def update_readme(msg = nil)
-		@log.debug { "Updating readme file at #{@local_path} #{msg}"}
-		File.open("#{@local_path}/README", 'w') do |f|
-			f.puts("Repository init at #{DateTime.now}")
-			if msg
-				f.puts(msg)
-			end
-		end			
-	end
+  def update_readme(msg = nil)
+    @log.debug { "Updating readme file at #{@local_path} #{msg}"}
+    File.open("#{@local_path}/README", 'w') do |f|
+      f.puts("Repository init at #{DateTime.now}")
+      if msg
+        f.puts(msg)
+      end
+    end
+  end
 end

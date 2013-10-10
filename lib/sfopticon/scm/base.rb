@@ -96,7 +96,7 @@ class SfOpticon::Scm::Base
 	# than Git this will likely be a no-op
 	#
 	# @return (see #add_file)
-	def add_changes()
+	def add_changes
 		raise NotImplementedError
 	end
 

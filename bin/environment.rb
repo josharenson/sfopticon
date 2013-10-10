@@ -97,7 +97,7 @@ class EnvironmentCLI < Thor
 			exit
 		end
 
-		if SfOpticon::Schema::Environment.find_by_name(options[:name]) then
+		if SfOpticon::Schema::Environment.find_by_name(options[:name])
 			puts "Salesforce organization #{options[:name]} already exists"
 			exit
 		end

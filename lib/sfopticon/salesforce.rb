@@ -61,7 +61,7 @@ class SfOpticon::Salesforce
 	# to the :extract_to parameter.
 	def retrieve(opts = { :manifest => nil, :extract_to => '.' })
     	opts[:manifest] ||= manifest(@env.sf_objects)
-    	@log.debug { "Retrieving #{opts[:manifest].keys.join(',')}" }
+    	@log.debug { "Retrieving #{opts[:manifest].keys.join(',')} to #{opts[:extract_to]}" }
     	client.retrieve_unpackaged(opts[:manifest]).extract_to(opts[:extract_to]).perform    
   	end
 
@@ -69,7 +69,6 @@ class SfOpticon::Salesforce
 	# is currently maintained in the application.yml
 	def metadata_types
 		@names ||= self.class.metadata_types
-		@names
 	end
 
 	# Lists the available metadata types. This is a list that
