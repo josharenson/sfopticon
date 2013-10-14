@@ -59,8 +59,8 @@ class SfOpticon::Scm::Github < SfOpticon::Scm::Base
     begin
       @repo = @octo.repository? @repo_path
     rescue Exception => e
-      puts "Please verify your github credentials!"
-      abort e.message
+      @log.error { "An exception was raised getting the repository from OctoKit: #{e.message}" }
+      raise e
     end
 
 
