@@ -5,13 +5,13 @@ Savon.configure {|c| c.log = false }
 
 describe SfOpticon::Environment do
 	before(:each) do
-		@empty_env = SfOpticon::Schema::Environment.new
-		@prod = SfOpticon::Schema::Environment.first()
+		@empty_env = SfOpticon::Environment.new
+		@prod = SfOpticon::Environment.first()
 	end
 
   context "Production environment creation" do
     it "should create a production environment", :create_prod do
-      @prod = SfOpticon::Schema::Environment.create(
+      @prod = SfOpticon::Environment.create(
           :name => 'SPEC-Production',
           :username => SfOpticon::Settings.test.username,
           :password => SfOpticon::Settings.test.password,
@@ -47,6 +47,6 @@ describe SfOpticon::Environment do
 
 	# Tear down the production environment
 	after(:all) do
-		SfOpticon::Schema::Environment.find_by_production(true).remove()
+		SfOpticon::Environment.find_by_production(true).remove()
 	end
 end
