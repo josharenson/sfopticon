@@ -1,3 +1,7 @@
+unless ENV.has_key? 'SFOPTICON_HOME' and Dir.exist? ENV['SFOPTICON_HOME']
+	ENV['SFOPTICON_HOME'] = File.join(File.dirname(__FILE__), '..')
+end
+
 require 'sfopticon'
 require 'fileutils'
 
