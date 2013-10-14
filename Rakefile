@@ -33,6 +33,9 @@ task :migrate => :connect_to_db do
 	ActiveRecord::Migrator.migrate(@migrations_dir)
 end
 
+desc "Creates the configured database and executes the migrations"
+task :setup_db => [:create_db,:migrate]
+
 task :generate_migration, [:name] => :configuration do |t,args|
 	migration_name = args[:name]
 	type = migration_name.split(/_/)[0]
