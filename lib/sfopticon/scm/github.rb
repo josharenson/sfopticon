@@ -7,6 +7,8 @@ class SfOpticon::Scm::Github < SfOpticon::Scm::Base
   #@!attribute repo_url
   #  @return [String] The full URL to the remote repository
   attr_accessor :repo_url
+  attr_reader :username
+  @password
 
   def self.create_remote_repo(name, opts = {})
     SfOpticon::Logger.info { "Creating remote repository #{name}" }
@@ -38,8 +40,10 @@ class SfOpticon::Scm::Github < SfOpticon::Scm::Base
     end    
 
     ## Entry point for all things github
-    @octo = Octokit::Client.new :login => @config.username,
-                                :password => @config.password
+    @username = @config.username
+    @password = @config.password
+    @octo = Octokit::Client.new :login => @username
+                                :password => @password
 
     # We have to insert the username/password into the URL for
     # adding the remote

@@ -27,7 +27,7 @@ describe SfOpticon::Scm do
 
 	context "When the service is remote it" do
 		it "should successfully connect" do
-			@scm.octo.user.name.should_not be_nil
+			@scm.username.should_not be_nil
 		end
 	end
 
