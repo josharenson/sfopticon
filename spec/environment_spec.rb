@@ -3,7 +3,7 @@ require 'spec_helper'
 HTTPI.log = false
 Savon.configure {|c| c.log = false }
 
-describe SfOpticon::Schema::Environment do
+describe SfOpticon::Environment do
 	before(:each) do
 		@empty_env = SfOpticon::Schema::Environment.new
 		@prod = SfOpticon::Schema::Environment.first()
