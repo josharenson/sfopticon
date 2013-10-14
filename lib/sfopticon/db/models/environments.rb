@@ -1,7 +1,7 @@
 require 'metaforce'
 require 'fileutils'
 
-class SfOpticon::Schema::Environment < ActiveRecord::Base
+class SfOpticon::Environment < ActiveRecord::Base
   validates_uniqueness_of :name, :message => "This organization is already configured."
   attr_accessible :name, 
                   :username, 

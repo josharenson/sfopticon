@@ -1,4 +1,4 @@
-class SfOpticon::Schema::SfObject < ActiveRecord::Base
+class SfOpticon::SfObject < ActiveRecord::Base
   belongs_to :environment
   @field_listing = %w(created_by_id created_by_name created_date namespace_prefix
                       file_name full_name sfobject_id last_modified_by_id

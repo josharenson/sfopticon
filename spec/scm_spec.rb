@@ -18,13 +18,6 @@ describe SfOpticon::Scm do
 		end
 	end
 
-	def del_repo
-		if @scm.repo_exists?
-			@scm.delete_repo
-			clear_local_path
-		end
-	end
-
 	context "When the service is remote it" do
 		it "should successfully connect" do
 			@scm.username.should_not be_nil
@@ -33,12 +26,7 @@ describe SfOpticon::Scm do
 
 	context "When managing repositories on a remote service it" do
 		it "should be able to create a remote repository", :create_repo do
-			del_repo 
 			create_repo
-		end
-
-		it "should be able to delete a remote repository", :delete_repo do
-			del_repo
 		end
 	end
 

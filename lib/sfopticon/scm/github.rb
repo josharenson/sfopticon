@@ -42,7 +42,7 @@ class SfOpticon::Scm::Github < SfOpticon::Scm::Base
     ## Entry point for all things github
     @username = @config.username
     @password = @config.password
-    @octo = Octokit::Client.new :login => @username
+    @octo = Octokit::Client.new :login => @username,
                                 :password => @password
 
     # We have to insert the username/password into the URL for
