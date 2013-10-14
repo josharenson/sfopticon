@@ -12,10 +12,17 @@ require 'active_record'
 require 'date'
 require 'extlib'
 require 'fileutils'
+require 'active_record_migrations'
+
+ActiveRecordMigrations.configure do |c|
+	c.yaml_config = 'application.yml'
+	c.environment = 'database'
+	c.db_dir = 'lib/sfopticon/db'
+end
+ActiveRecordMigrations.load_tasks
 
 task :configuration do
 	@db_config = SfOpticon::Settings.database
-	@migrations_dir = "#{ENV['SFOPTICON_HOME']}/lib/sfopticon/db/migrations/"
 end
 
 task :connect_to_db => :configuration do
@@ -27,35 +34,4 @@ task :create_db => :configuration do
 	ActiveRecord::Base.connection.create_database @db_config.database
 	ActiveRecord::Base.establish_connection @db_config
 	puts "Database #{@db_config.database} created."
-end
-
-task :migrate => :connect_to_db do
-	ActiveRecord::Migrator.migrate(@migrations_dir)
-end
-
-desc "Creates the configured database and executes the migrations"
-task :setup_db => [:create_db,:migrate]
-
-task :generate_migration, [:name] => :configuration do |t,args|
-	migration_name = args[:name]
-	type = migration_name.split(/_/)[0]
-
-	unless migration_name
-		abort "A migration name must be provided"
-	end
-
-	filename = DateTime.now.strftime("%Y%m%d%H%M%S") + "_" + migration_name.snake_case + ".rb"
-
-	unless Dir.exist? @migrations_dir
-		FileUtils.mkdir_p @migrations_dir
-	end
-
-	File.open(File.join(@migrations_dir, filename), 'w') do |f|
-		f.puts("class #{migration_name} < ActiveRecord::Migration")
-		f.puts("  def change")
-		f.puts("  end")
-		f.puts("end")
-	end
-
-	puts "Migration #{filename} created in #{@migrations_dir}"
 end
