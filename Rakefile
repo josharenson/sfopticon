@@ -35,3 +35,5 @@ task :create_db => :configuration do
 	ActiveRecord::Base.establish_connection @db_config
 	puts "Database #{@db_config.database} created."
 end
+
+task :setup_db => [:create_db, 'db:schema:load']
