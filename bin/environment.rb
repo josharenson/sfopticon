@@ -83,7 +83,7 @@ class EnvironmentCLI < Thor
 	end
 
 	option :name, :type => :string, :required => true
-	option :username, :type => :string, :required => true
+	option :username, :type => :string, :required => false
 	option :password, :type => :string, :required => false
 	option :production, :type => :boolean, :default => false
 	desc "create", "Create a new Salesforce organization"
@@ -105,6 +105,12 @@ class EnvironmentCLI < Thor
 		if SfOpticon::Environment.find_by_name(opts_copy[:name])
 			puts "Salesforce organization #{opts_copy[:name]} already exists"
 			exit
+		end
+
+		# Retrieve the username from the command line if not supplied
+		if not opts_copy[:username]
+			print "Salesforce Login: "
+			opts_copy[:username] = $stdin.gets.chomp
 		end
 
 		# Get the password (hidden) if it was not supplied on the cli
