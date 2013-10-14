@@ -3,11 +3,13 @@
 require 'thor'
 require 'io/console'
 
-$root = File.join(File.dirname(__FILE__), '..')
+unless ENV.has_key? 'SFOPTICON_HOME' and Dir.exist? ENV['SFOPTICON_HOME']
+	ENV['SFOPTICON_HOME'] = File.join(File.dirname(__FILE__), '..')
+end
 
 # Custom lib path and lib requires
-$:.unshift File.join(File.dirname(__FILE__), '..')
-$:.unshift File.join(File.dirname(__FILE__), '../lib')
+$:.unshift ENV['SFOPTICON_HOME']
+$:.unshift File.join(ENV['SFOPTICON_HOME'], 'lib')
 require 'sfopticon'
 
 class EnvironmentCLI < Thor

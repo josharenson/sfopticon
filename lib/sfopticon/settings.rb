@@ -7,8 +7,8 @@ require 'yaml'
 ## or local db setttings in the application_local.yml file.
 class Hash; include DeepSymbolizable; end
 class SfOpticon::Settings < Settingslogic
-	config_file = File.join($root, 'application.yml')
-	override_file = File.join($root, 'application_local.yml')
+	config_file = File.join(ENV['SFOPTICON_HOME'], 'application.yml')
+	override_file = File.join(ENV['SFOPTICON_HOME'], 'application_local.yml')
 	source config_file
 
 	if File.exist? override_file
