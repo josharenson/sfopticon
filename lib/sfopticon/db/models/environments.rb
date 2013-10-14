@@ -9,6 +9,7 @@ class SfOpticon::Environment < ActiveRecord::Base
                   :production
                 
   has_many :sf_objects, :dependent => :destroy
+  has_many :branches
   after_initialize :after_initialize
 
   def after_initialize
@@ -29,6 +30,15 @@ class SfOpticon::Environment < ActiveRecord::Base
   def init_branch
     prod = SfOpticon::Scm.new(self.class.find_by_production(true).name)
     @scm = SfOpticon::Scm.adapter.create_branch(prod, name)
+  end
+
+  ##
+  # Rebases this environment with any changes in production since
+  # last integration.
+  def rebase
+    int = branch.make_int_branch
+    int.merge_in(self.class.find_by_production(true).branch)
+    int.deploy_to(self)
   end
 
   # Removes all sf_objects (via delete_all to avoid instantiation cost), the

@@ -11,13 +11,18 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20131013205131) do
+ActiveRecord::Schema.define(version: 20131014210205) do
+
+  create_table "branches", force: true do |t|
+    t.string "name"
+  end
 
   create_table "environments", force: true do |t|
     t.string  "name",       null: false
     t.string  "username"
     t.string  "password"
     t.boolean "production"
+    t.integer "branch_id"
   end
 
   create_table "sf_objects", force: true do |t|
