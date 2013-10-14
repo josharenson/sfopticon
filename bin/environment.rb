@@ -15,7 +15,7 @@ require 'sfopticon'
 class EnvironmentCLI < Thor
 	desc "list", "List existing Salesforce organizations"
 	def list
-		env_list = SfOpticon::Schema::Environment.all
+		env_list = SfOpticon::Environment.all
 		if env_list.empty?
 			puts "No configured environments"
 		else
@@ -28,7 +28,7 @@ class EnvironmentCLI < Thor
 	option :org, :type => :string, :required => true
 	desc "describe", "Displays the Salesforce organization's configuration"
 	def describe
-		env = SfOpticon::Schema::Environment.find_by_name(options[:org])
+		env = SfOpticon::Environment.find_by_name(options[:org])
                 if env.nil?
                   abort "Environment \"" + options[:org] + "\" not found."
                 end
@@ -43,7 +43,7 @@ class EnvironmentCLI < Thor
 	option :org, :type => :string, :required => true
 	desc "delete", "Deletes the Salesforce organization from the database"
 	def delete
-		env = SfOpticon::Schema::Environment.find_by_name(options[:org])
+		env = SfOpticon::Environment.find_by_name(options[:org])
 		unless env
 			puts "Environment \"#{options[:org]}\" not found."
 			exit
@@ -71,7 +71,7 @@ class EnvironmentCLI < Thor
 	option :production, :type => :boolean, :default => false
 	desc "update", "Update the configuration of an existing Salesforce organization"
 	def update
-		env = SfOpticon::Schema::Environment.find_by_name(options[:org])
+		env = SfOpticon::Environment.find_by_name(options[:org])
                 if env.nil?
                   abort "Environment \"" + options[:org] + "\" not found."
                 end
@@ -91,18 +91,18 @@ class EnvironmentCLI < Thor
 		opts_copy = options.dup
 
 		# Only 1 production environment
-		if opts_copy[:production] and SfOpticon::Schema::Environment.find_by_production(true)
+		if opts_copy[:production] and SfOpticon::Environment.find_by_production(true)
 			puts "A production environment already exists"
 			exit
 		end
 
 		# If no production environment exists then we must create that first
-		if not opts_copy[:production] and not SfOpticon::Schema::Environment.find_by_production(true)
+		if not opts_copy[:production] and not SfOpticon::Environment.find_by_production(true)
 			puts "A production environment must be configured"
 			exit
 		end
 
-		if SfOpticon::Schema::Environment.find_by_name(opts_copy[:name])
+		if SfOpticon::Environment.find_by_name(opts_copy[:name])
 			puts "Salesforce organization #{opts_copy[:name]} already exists"
 			exit
 		end
@@ -113,13 +113,13 @@ class EnvironmentCLI < Thor
 			opts_copy[:password] = STDIN.noecho(&:gets).chomp
 		end
 
-		env = SfOpticon::Schema::Environment.create(opts_copy)
+		env = SfOpticon::Environment.create(opts_copy)
 		begin
 			env.init
 		rescue Exception => e
 			puts "Error creating remote repository. " + e.message
 			puts "Attempting to rollback local changes..."
-			SfOpticon::Schema::Environment.destroy(env)
+			SfOpticon::Environment.destroy(env)
 			abort "Successfuly rolled back changes."
 		end
 

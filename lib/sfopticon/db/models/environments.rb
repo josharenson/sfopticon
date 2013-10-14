@@ -79,9 +79,9 @@ class SfOpticon::Environment < ActiveRecord::Base
     @log.info { "Deleting all sfobjects for #{name}" }
     sf_objects.delete_all
     
-    SfOpticon::Schema::SfObject.transaction do
+    SfOpticon::SfObject.transaction do
       @sforce.gather_metadata.each do |o|
-        sf_objects << SfOpticon::Schema::SfObject.create(o)
+        sf_objects << SfOpticon::SfObject.create(o)
       end
       save!
     end

@@ -7,7 +7,7 @@ class SfOpticon::SfObject < ActiveRecord::Base
   @field_listing.each { |f| attr_accessible f.to_sym }
 
   def copy_from_sf(sfobject)
-    self.assign_attributes(SfOpticon::Schema::SfObject.map_fields_from_sf(sfobject),
+    self.assign_attributes(SfOpticon::SfObject.map_fields_from_sf(sfobject),
                            :without_protection => true)
   end
 

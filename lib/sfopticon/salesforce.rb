@@ -5,7 +5,7 @@ require 'extlib'
 class SfOpticon::Salesforce
 
 	##
-	# @param env [SfOpticon::Schema::Environment]
+	# @param env [SfOpticon::Environment]
 	def initialize(env)
 		@env = env
 		@log = SfOpticon::Logger
@@ -31,7 +31,7 @@ class SfOpticon::Salesforce
 	# If no metadata types are provided it will gather for the configured default list.
 	def gather_metadata(type_list = [])
 		@sfobjects = []
-		mg = SfOpticon::Schema::SfObject
+		mg = SfOpticon::SfObject
 
 		types = if(type_list.empty?)
 			metadata_types
@@ -80,7 +80,7 @@ class SfOpticon::Salesforce
 	# Generates a Metaforce::Manifest based on the list of objects
 	# given. The objects must have a :object_type key that corresponds
 	# to a valid metadata type, and a :full_name key which corresponds
-	# to the full_name in the SfOpticon::Schema::SfObject model.
+	# to the full_name in the SfOpticon::SfObject model.
 	def manifest(object_list)
 		mf = {}
 

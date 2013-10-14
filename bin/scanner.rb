@@ -16,14 +16,14 @@ class ScannerCLI < Thor
 	option :org, :type => :string, :required => true
 	option :type, :desc => "The Metadata type to retrieve, defaults to all"
 	def snapshot
-		SfOpticon::Schema::Environment.find_by_name(options[:org]).snapshot
+		SfOpticon::Environment.find_by_name(options[:org]).snapshot
 	end		
 
 	desc "changeset", "Perform a changeset analysis of the Salesforce organization"
 	option :org, :type => :string, :required => true
 	option :type, :desc => "The Metadata type to retrieve, defaults to all"	
 	def changeset
-		SfOpticon::Schema::Environment.find_by_name(options[:org]).changeset
+		SfOpticon::Environment.find_by_name(options[:org]).changeset
 	end
 end
 
