@@ -14,7 +14,7 @@ class SfOpticon
 	## There, now go ahead
 
 	require 'sfopticon/logger'
-	require 'sfopticon/db/schema'		
+	require 'sfopticon/db/init'
 	require 'sfopticon/scm'
 	require 'sfopticon/scm/base'
 	require 'sfopticon/salesforce'
