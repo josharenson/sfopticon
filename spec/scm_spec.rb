@@ -5,7 +5,7 @@ describe SfOpticon::Scm do
 		# We ensure this is done only once, since the values are
 		# merged into the Settings singleton
 		@repo_name = "SPEC-OPTICON-Salesforce"
-		@scm = SfOpticon::Scm.new(:repo => @repo_name)
+		@scm = SfOpticon::Scm.new(@repo_name)
 	end
 
 	def clear_local_path
