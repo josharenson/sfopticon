@@ -26,7 +26,7 @@ describe SfOpticon::Scm do
 
 	context "When managing repositories on a remote service it" do
 		it "should be able to create a remote repository", :create_repo do
-			@scm.create_remote_repo
+			create_repo
 		end
 	end
 

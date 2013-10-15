@@ -10,16 +10,12 @@ class SfOpticon::Scm::Github < SfOpticon::Scm::Base
   attr_reader :username
   @password
 
-  def create_remote_repo(opts = {})
-    SfOpticon::Logger.info { "Creating remote repository #{@repo_name}" }
-    if repo_exists?
-      @log.debug {"Repository #{@repo_path} found"}
-    else
-      @log.debug {"Executing @octo.create_repo('#{@repo_name}')"}
-      @repo = @octo.create_repo(@repo_name, @config.options)
-      create_master
-    end
-    @repo
+  def self.create_remote_repo(name, opts = {})
+    SfOpticon::Logger.info { "Creating remote repository #{name}" }
+    repo = self.new(name, opts)
+    repo.create_repo
+
+    repo
   end
 
   def self.create_branch(prod,name)
@@ -101,6 +97,21 @@ class SfOpticon::Scm::Github < SfOpticon::Scm::Base
 
   def repo_exists?
     !!@repo
+  end
+
+  # Creates a remote repository on GitHub
+  def create_repo
+    @log.info { "Creating repository #{@repo_path}" }
+
+    if repo_exists?
+      @log.debug { "Repository #{@repo_path} found"  }
+    else
+      @log.debug { "Executing @octo.create_repo('#{@repo_name}')"}
+      @repo = @octo.create_repo(@repo_name, @config.options)
+      create_master
+    end
+
+    @repo
   end
 
   # Creates a branch
