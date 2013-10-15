@@ -5,10 +5,7 @@ end
 $:.unshift ENV['SFOPTICON_HOME']
 $:.unshift File.join(ENV['SFOPTICON_HOME'], 'lib')
 
-require 'deep_symbolize'
-require 'sfopticon/settings'
-require 'logger'
-require 'active_record'
+require 'sfopticon'
 require 'date'
 require 'extlib'
 require 'fileutils'
