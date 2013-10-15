@@ -9,7 +9,7 @@ gem 'activesupport', ">= 3.2"
 gem 'builder', "~> 3.0"
 gem 'i18n'
 gem 'zip'
-gem 'metaforce', '> 1.0.5'
+gem 'metaforce', :github => 'ryanparr/metaforce'
 gem 'trollop'
 gem 'extlib'
 gem 'thor'
