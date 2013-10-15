@@ -18,10 +18,10 @@ class SfOpticon::Scm::Github < SfOpticon::Scm::Base
     repo
   end
 
-  def self.create_branch(prod,name)
-    SfOpticon::Logger.info { "Creating branch #{name} from #{prod.repo_name}"}
+  def self.create_branch(src,name)
+    SfOpticon::Logger.info { "Creating branch #{name} from #{src.repo_name}"}
     repo = self.new(name)
-    repo.create_branch(prod.repo_url)
+    repo.create_branch(src.repo_url)
 
     repo
   end
@@ -58,8 +58,6 @@ class SfOpticon::Scm::Github < SfOpticon::Scm::Base
       @log.error { "An exception was raised getting the repository from OctoKit: #{e.message}" }
       raise e
     end
-
-
 
     ## Local path
     @local_path = "#{@config.local_path}/#{@repo_name}"
@@ -101,6 +99,7 @@ class SfOpticon::Scm::Github < SfOpticon::Scm::Base
 
   # Creates a remote repository on GitHub
   def create_repo
+    @config.options['auto_init'] = true
     @log.info { "Creating repository #{@repo_path}" }
 
     if repo_exists?
@@ -108,13 +107,14 @@ class SfOpticon::Scm::Github < SfOpticon::Scm::Base
     else
       @log.debug { "Executing @octo.create_repo('#{@repo_name}')"}
       @repo = @octo.create_repo(@repo_name, @config.options)
-      create_master
+      @git = Git.clone(@repo_url, @local_path)
+      update_readme("Production Master")
     end
 
     @repo
   end
 
-  # Creates a branch
+  ## Creates a branch
   def create_branch(repo_url)
     @log.info { "Creating branch #{@repo_name}" }
     @git = Git.clone(repo_url, @local_path)
@@ -122,19 +122,12 @@ class SfOpticon::Scm::Github < SfOpticon::Scm::Base
     # For some reason I can't update an existing file in the in_branch block.
     # Additionally, this block doesn't actually commit. After the block is complete
     # you still have to checkout the branch.
-    @git.branch(@repo_name).in_branch('Branch README') {
-      @log.debug { "Updating #{@local_path}/BRANCHREADME"}
-
-      File.open("#{@local_path}/BRANCHREADME", 'w') do |f|
-        f.puts("Branch #{@repo_name} created at #{DateTime.now}")
-      end
-    }
-    @git.checkout(@repo_name)
-    FileUtils.move("#{@local_path}/BRANCHREADME", "#{@local_path}/README")
-    @git.add(:all => true)
-    @git.commit('Branch Init')
-
-    @git.push('origin',"#{@repo_name}:#{@repo_name}")
+    @git.branch(@repo_name).in_branch("Creating branch #{@repo_name}") do
+      update_readme("Branch #{@repo_name}")
+    end
+    checkout_res = @git.checkout(@repo_name)
+    @log.debug { "Checkout: " + checkout_res }
+    push(@repo_name,@repo_name)
   end
 
   # Creates the master branch on Github by adding a README with
@@ -146,22 +139,25 @@ class SfOpticon::Scm::Github < SfOpticon::Scm::Base
     FileUtils.mkdir_p(path)
     @git = Git.init(path)
 
-    update_readme
+    update_readme("Production Master")
     add_changes
-    @git.commit('Repository Init')
+    commit('Repository Init')
 
     # Finalize
     @git.add_remote('origin', @repo_url)
-    @git.push
+    push
   end
 
   def update_readme(msg = nil)
     @log.debug { "Updating readme file at #{@local_path} #{msg}"}
-    File.open("#{@local_path}/README", 'w') do |f|
-      f.puts("Repository init at #{DateTime.now}")
+    File.open("#{@local_path}/README.md", 'w') do |f|
+      f.puts("Init at #{DateTime.now}")
       if msg
+        f.puts("")
         f.puts(msg)
       end
     end
+
+    return true
   end
 end

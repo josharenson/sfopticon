@@ -9,7 +9,7 @@ class SfOpticon::Environment < ActiveRecord::Base
                   :production
                 
   has_many :sf_objects, :dependent => :destroy
-  has_many :branches
+  has_one  :branches
   after_initialize :after_initialize
 
   def after_initialize
@@ -36,7 +36,7 @@ class SfOpticon::Environment < ActiveRecord::Base
   # Rebases this environment with any changes in production since
   # last integration.
   def rebase
-    int = branch.make_int_branch
+    int = branch.make_branch
     int.merge_in(self.class.find_by_production(true).branch)
     int.deploy_to(self)
   end
