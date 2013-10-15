@@ -6,9 +6,13 @@
 database:
   adapter: mysql2
   encoding: utf8
-  database: opticon
-  username: 
+  host: localhost
+  port: 5432
+  database: sfopticon
+  socket:
+  username: root
   password: 
+  flags:
 
 scm:
   adapter: github
@@ -25,7 +29,6 @@ scm:
     has_downloads:
     organization:
     team_id:
-    auto_init:
     gitignore_template:
 
 test:
