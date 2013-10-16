@@ -27,8 +27,16 @@ task :connect_to_db => :configuration do
 end
 
 task :create_db => :configuration do
-	ActiveRecord::Base.establish_connection @db_config.merge('database' => nil)
-	ActiveRecord::Base.connection.create_database @db_config.database
+	db_name = @db_config.database
+	tmp_config = @db_config.dup
+	tmp_config.delete 'database'
+
+	ActiveRecord::Base.establish_connection tmp_config
+	puts "Established connection."
+
+	ActiveRecord::Base.connection.create_database db_name
+	puts "Created database"	
+
 	ActiveRecord::Base.establish_connection @db_config
 	puts "Database #{@db_config.database} created."
 end
