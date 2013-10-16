@@ -14,6 +14,8 @@ class CreateSfObjects < ActiveRecord::Migration
 		t.string   "object_type"
 		t.string   "namespace_prefix"
 		t.integer  "environment_id"
+
+		t.timestamps
 	end
 
 	add_index :sf_objects, ["environment_id"], :name => "index_sf_objects_on_environment_id"
