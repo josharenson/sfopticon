@@ -8,7 +8,6 @@ end
 $:.unshift ENV['SFOPTICON_HOME']
 $:.unshift File.join(ENV['SFOPTICON_HOME'], 'lib')
 require 'sfopticon'
-require 'sfopticon/db/schema'
 require 'thor'
 
 class IntegrationCLI < Thor

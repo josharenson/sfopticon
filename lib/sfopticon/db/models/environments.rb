@@ -7,7 +7,8 @@ class SfOpticon::Environment < ActiveRecord::Base
   attr_accessible :name, 
                   :username, 
                   :password,
-                  :production
+                  :production,
+                  :locked
                 
   has_many :sf_objects, :dependent => :destroy
   has_one  :branch
@@ -40,6 +41,74 @@ class SfOpticon::Environment < ActiveRecord::Base
     branch.push                
   end
 
+  ##
+  # Locks the environment to prevent the changeset tool from making any
+  # changes. This is necessary so that integration branches will have
+  # a pristine head to work from
+  def lock
+    self.locked = true
+    save!
+  end
+
+  ##
+  # Unlocks the environment.
+  def unlock
+    self.locked = false
+    save!
+  end
+
+  ##
+  # Rebases our branch from production
+  def rebase
+    branch.rebase
+  end
+
+  ##
+  # Takes a set of sf_objects and creates the directory/file layout
+  # for a destructive change. We then call on to deploy_to_me.
+  def deploy_destructive_changes(sf_objects)
+    Dir.mktmpdir do |dir|
+      # Create an empty package.xml
+      File.open(File.join(dir, 'package.xml'), 'w') do |f|
+        f.puts(@sforce.manifest([]).to_xml)
+      end
+
+      # Now we need a proper destructiveChanges.xml
+      File.open(File.join(dir, 'destructiveChanges.xml'), 'w') do |f|
+        f.puts(@sforce.manifest(sf_objects).to_xml)
+      end
+
+      deploy_to_me(dir)
+    end
+  end
+
+  ##
+  # Takes a set of sf_objects and their source directory and creates
+  # a deployment package.xml, and then deploys.
+  def deploy_productive_changes(src_dir, sf_objects)
+    File.open(File.join(src_dir, 'package.xml'), 'w') do |f|
+      f.puts(@sforce.manifest(sf_objects).to_xml)
+    end
+
+    deploy_to_me(src_dir)
+  end
+
+  ##
+  # Deploys code changes to this environment. If this is a destructive change
+  # then the destructiveChanges.xml must live in the root of the src_dir
+  # parameter.
+  #
+  # @param src_dir [String] The source directory for the deployment. The 
+  #    package.xml must exist in the root of the directory.
+  def deploy_to_me(src_dir)
+    @log.info { "Deploying changes from #{src_dir} to me"}
+    @sforce.client.deploy(src_dir)
+      .on_complete {|job| @log.info { "Deploy complete: #{job.id}"}}
+      .on_error    {|job| @log.error { "Deployment failed!"}}
+      .perform
+  end
+
+  ##
   # Removes all sf_objects (via delete_all to avoid instantiation cost), the
   # local repo directory, and itself. This does *not* remove any remote repos!
   def remove
@@ -102,10 +171,14 @@ class SfOpticon::Environment < ActiveRecord::Base
     # Now we replay the changes into the repo and the database
     diff.each do |change|
       @log.info { "DIFF: #{change[:type]} - #{change[:object][:full_name]}" }
-      
+
       commit_message = "#{change[:type].to_s.capitalize} - #{change[:object][:full_name]}\n\n"
-      change[:object].keys.each do |key|
-        commit_message += "#{key.to_s.camelize}: #{change[:object][key]}\n"
+      if change[:type] == :delete
+        commit_message += "#{change[:object][:file_name]} deleted"
+      else      
+        change[:object].keys.each do |key|
+          commit_message += "#{key.to_s.camelize}: #{change[:object][key]}\n"
+        end
       end
 
       case change[:type]

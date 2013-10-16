@@ -24,7 +24,12 @@ class ScannerCLI < Thor
 	option :org, :type => :string, :required => true
 	option :type, :desc => "The Metadata type to retrieve, defaults to all"	
 	def changeset
-		SfOpticon::Environment.find_by_name(options[:org]).changeset
+		env = SfOpticon::Environment.find_by_name(options[:org])
+		if env.locked?
+			abort "This environment is currently locked."
+		end
+
+		env.changeset
 	end
 end
 

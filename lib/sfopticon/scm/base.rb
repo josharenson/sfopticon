@@ -56,6 +56,13 @@ module SfOpticon::Scm::Base
 	end
 
 	##
+	# Calculates the changes on our integration branch.
+	# 
+	def calculate_changes_on_int
+		raise NotImplementedError
+	end
+
+	##
 	# Adds a file to the local repository. 
 	# @note Reraises IO exceptions.
 	#

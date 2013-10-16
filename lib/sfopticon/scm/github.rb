@@ -48,6 +48,54 @@ module SfOpticon::Scm::Github
   end
 
   ##
+  # Creates an integration branch. These will be a branch of *this*
+  # branch and will be a destination for merging from some other branch.
+  # It is from these branches that manifests will be generated and
+  # deployed.
+  #
+  # @param ib_name [String] The name of the integration branch
+  def make_integration_branch(ib_name)
+    # First just ensure that we're on the correct branch
+    init
+
+    # Now we want to create a new branch from this and check it out
+    @git.branch(ib_name).checkout
+  end
+
+  ##
+  # Performs a merge from any branch to the current branch
+  # 
+  # @param branch [String] The branch to merge in
+  def merge(branch)
+    @log.info { "Merging branch #{branch} into #{name}"}
+    @git.fetch('origin')
+    @git.merge(branch)
+  end
+
+  ##
+  # Calculates the changes on a branch since its inception. This is only done
+  # for integration branches, which are a throw-away and which we will be on
+  # at the time. We need the other_env to look up additions in the sf_objects
+  # so we have enough information for a manifest.
+  # 
+  # @param other_env [SfOpticon::Environment] The environment we're merging in
+  # @return changes [Hash] A hash with 2 keys, :added and :deleted, which are
+  #    arrays of sf_objects
+  def calculate_changes_on_int(other_env)
+    changes = { :added => [], :deleted => [] }
+    @git.diff(name, @git.current_branch).each do |commit|
+      case commit.type
+      when 'modified', 'new'
+        changes[:added].push(other_env.sf_objects.find_by_file_name(commit.path))
+      when 'deleted'
+        changes[:deleted].push(environment.find_by_file_name(commit.path))
+      end
+    end
+
+    changes
+  end  
+
+  ##
   # Clones the repo_url into the local path and switches to the branch
   def clone
     @log.info { "Cloning repository to #{local_path}"}
@@ -58,8 +106,9 @@ module SfOpticon::Scm::Github
   ##
   # Instantiate the local repo objects
   def init
+    @log.info { "Init'ing local repository #{local_path}" }
     @git = Git.init(local_path)
-    @git.checkout(name)
+    @git.branch(name).checkout
   end
 
   ##

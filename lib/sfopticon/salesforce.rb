@@ -20,6 +20,12 @@ class SfOpticon::Salesforce
 				c.log = SfOpticon::Logger
 			end
 
+			# For my testing
+			Metaforce.configure do |c|
+				c.host = 'test.salesforce.com'
+				c.log = SfOpticon::Logger
+			end			
+
 			@client = Metaforce::Metadata::Client.new :username => @env.username, 
 		                                              :password => @env.password
 		end
