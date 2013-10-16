@@ -1,27 +1,58 @@
 require 'fileutils'
 
-# @abstract Somewhat abstract base class for all Scm adapters.
-class SfOpticon::Scm::Base
-	#@!attribute local_path 
-	#   @return [String] the fully-qualified path to the repository working tree
-	#@!attribute repo_name
-	#   @return [String] the name of the repository
-	#@!attribute config
-	#   @return [Hash] the configuration section of the application.yml, plus
-	#       any options merged in at construction.
+class SfOpticon::Scm::RepositoryFoundException < Exception; end
 
-	attr_accessor :local_path,
-	              :repo_name,
-	              :config
+# @abstract Somewhat abstract base module for all Scm adapters.
+#
+# @note All SCM adapters should include this module to receive the free
+#    methods.
+module SfOpticon::Scm::Base
+	##
+	# Creates the remote repository. All configuration is taken from the application
+	# configuration, allowing for overrides passed after the name parameter.
+	#
+	# @param name [String] The name of the repository to create.
+	# @param options [Hash] Any values under {SfOpticon::Settings}.scm to override
+	# @return [SfOpticon::Scm]
+	def self.create_remote_repository(name, options = {})
+		raise NotImplementedError
+	end
 
 	##
-	# Initialize needs to take an optional hash in order to override
-	# application configuration.
-	#
-	# @param name [String] The name of the repo to instantiate
-	# @param opts [Hash] Options to override the scm config in application.yml
-	def initialize(name, opts = {})
+	# Clone to retrieve the remote repository.
+	def clone
 		raise NotImplementedError
+	end
+
+	##
+	# Instantiates the local repo
+	def init
+		raise NotImplementedError
+	end
+
+	##
+	# SfOpticon::Settings.scm
+	#
+	# @return [SfOpticon::Settings.scm]
+	def config
+		SfOpticon::Settings.scm
+	end
+
+	##
+	# @return [String] The repository URL with authentication information
+	#    embedded
+	def auth_url
+		url = config.url.gsub /(https?:\/\/)(.*)/,
+			"\\1#{config.username}:#{config.password}@\\2"
+
+		prod = SfOpticon::Environment.find_by_production(true)
+		"#{url}/#{prod.name}"
+	end
+
+	##
+	# @return [String] Full path to the local repository.
+	def local_path
+		File.join(config.local_path, name)
 	end
 
 	##
@@ -39,7 +70,7 @@ class SfOpticon::Scm::Base
 			FileUtils.mkdir_p(base_path)
 		end
 
-		FileUtils.cp(src, File.join(@local_path, dst))
+		FileUtils.cp(src, File.join(local_path, dst))
 	end
 
 	##
@@ -63,7 +94,7 @@ class SfOpticon::Scm::Base
 	#    repository, in the local repo.
 	# @return (see #add_file)
 	def delete_file(path)
-		FileUtils.remove_entry_secure(File.join(@local_path, path))
+		FileUtils.remove_entry_secure(File.join(local_path, path))
 	end
 
 	##
@@ -120,10 +151,8 @@ class SfOpticon::Scm::Base
 	# like Subversion should make this a no-op, and perform all commits
 	# in the {#commit} method.
 	#
-	# @param local_branch [String] The name of the local branch to push (optional)
-	# @param remote_branch [String] The name of the remote branch to push into (optional)
 	# @return (see #add_file)
-	def push(local_branch = nil, remote_branch = nil)
+	def push
 		raise NotImplementedError
 	end
 
@@ -136,26 +165,12 @@ class SfOpticon::Scm::Base
 	end
 
 	##
-	# Constructor.
-	# Creates the remote repository. All configuration is taken from the application
-	# configuration, allowing for overrides passed after the name parameter.
-	#
-	# @param name [String] The name of the repository to create.
-	# @param options [Hash] Any values under {SfOpticon::Settings}.scm to override
-	# @return [SfOpticon::Scm]
-	def self.create_remote_repo(name, options = {})
-		raise NotImplementedError
-	end
-
-	##
-	# Constructor.
-	# Creates a branch from HEAD, which represents the production Salesforce org.
-	# All configuration is taken from the application configuration.
+	# Creates a branch from master, which represents the production Salesforce 
+	# org. All configuration is taken from the application configuration.
 	# 
-	# @param prod [SfOpticon::Scm::Base] The production instance
 	# @param name [String] The name of the branch to create.
 	# @return [SfOpticon::Scm]
-	def self.create_branch(prod,name)
+	def create_remote_branch(name)
 		raise NotImplementedError
 	end
 end

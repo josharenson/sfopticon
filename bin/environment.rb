@@ -119,14 +119,17 @@ class EnvironmentCLI < Thor
 			opts_copy[:password] = STDIN.noecho(&:gets).chomp
 		end
 
-		env = SfOpticon::Environment.create(opts_copy)
 		begin
-			env.init
+			env = SfOpticon::Environment.create(opts_copy)
 		rescue Exception => e
 			puts "Error creating remote repository. " + e.message
 			puts "Attempting to rollback local changes..."
-			SfOpticon::Environment.destroy(env)
-			abort "Successfuly rolled back changes."
+
+			begin
+				SfOpticon::Environment.destroy(env)
+			rescue ActiveRecord::RecordNotFound
+			end
+			abort "Successfully rolled back changes."
 		end
 
 		puts "Environment #{env.name} (#{env.username})- Created"

@@ -8,11 +8,12 @@ end
 $:.unshift ENV['SFOPTICON_HOME']
 $:.unshift File.join(ENV['SFOPTICON_HOME'], 'lib')
 require 'sfopticon'
-require 'sfopticon/db/schema'
 require 'thor'
 
 class ScannerCLI < Thor
-	desc "snapshot", "Perform a clean snapshot of the Salesforce organization."
+	desc "snapshot", "Perform a clean snapshot of the Salesforce organization.
+	    WARNING: This may leave your local repository out of sync with your
+	    Salesforce snapshot."
 	option :org, :type => :string, :required => true
 	option :type, :desc => "The Metadata type to retrieve, defaults to all"
 	def snapshot

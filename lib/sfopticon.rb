@@ -13,10 +13,10 @@ class SfOpticon
 	require 'sfopticon/settings'
 	## There, now go ahead
 
-	require 'sfopticon/logger'
-	require 'sfopticon/db/init'
 	require 'sfopticon/scm'
 	require 'sfopticon/scm/base'
+	require 'sfopticon/logger'
+	require 'sfopticon/db/init'
 	require 'sfopticon/salesforce'
-	require 'sfopticon/diff'
+	require 'sfopticon/change_monitor/diff'
 end

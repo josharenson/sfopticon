@@ -2,43 +2,42 @@ require 'metaforce'
 require 'fileutils'
 
 class SfOpticon::Environment < ActiveRecord::Base
-  validates_uniqueness_of :name, :message => "This organization is already configured."
+  validates_uniqueness_of :name, 
+                          :message => "This organization is already configured."
   attr_accessible :name, 
                   :username, 
                   :password,
                   :production
                 
   has_many :sf_objects, :dependent => :destroy
-  has_one  :branches
-  after_initialize :after_initialize
+  has_one  :branch
 
-  def after_initialize
+  # Setup variables
+  after_initialize do |env|
     @log = SfOpticon::Logger
     @config = SfOpticon::Settings.salesforce
     @sforce = SfOpticon::Salesforce.new(self)
   end
 
-  # Provide access to the SCM instance. 
-  def scm
-    @scm ||= SfOpticon::Scm.new(name)
-  end
-
-  def init_production
-    @scm = SfOpticon::Scm.adapter.create_remote_repo(name)
-  end
-
-  def init_branch
-    prod = SfOpticon::Scm.new(self.class.find_by_production(true).name)
-    @scm = SfOpticon::Scm.adapter.create_branch(prod, name)
-  end
-
   ##
-  # Rebases this environment with any changes in production since
-  # last integration.
-  def rebase
-    int = branch.make_branch
-    int.merge_in(self.class.find_by_production(true).branch)
-    int.deploy_to(self)
+  # This method is called when an environment is first created. This allows
+  # us to reach out and create the remote repository if needed, or the branch.
+  # This will also clone the branch and speak into the README.md
+  after_create do |env|
+    if production
+      # If we're a production environment then we need to create the remote
+      # repository
+      SfOpticon::Scm.adapter.create_remote_repository(name)
+    end
+
+    create_branch(name: production ? 'master' : name)
+
+    snapshot
+    @sforce.retrieve :manifest => @sforce.manifest(sf_objects),
+                     :extract_to => branch.local_path
+    branch.add_changes
+    branch.commit("Initial push of production code")
+    branch.push                
   end
 
   # Removes all sf_objects (via delete_all to avoid instantiation cost), the
@@ -56,30 +55,6 @@ class SfOpticon::Environment < ActiveRecord::Base
     end
 
     delete
-  end
-
-  #### Init the repository
-  # If this is the initial setup of the production system we'll want an empty
-  # repository. The repository will need to be configured on the remote server
-  # and empty.
-  # 
-  # If this isn't a production org, then we're going to want to branch from the
-  # production org instead.
-  def init
-    @log.info { "Beginning snapshot of #{name}" }
-    snapshot
-    @log.info { "Snapshot complete" }
-
-    if production
-      init_production
-      @sforce.retrieve :manifest => @sforce.manifest(sf_objects),
-                       :extract_to => scm.local_path
-      scm.add_changes
-      scm.commit("Initial push of production code")
-      scm.push()
-    else
-      init_branch
-    end
   end
 
   # Create's a clean snapshot of all SF metadata related to the
@@ -104,8 +79,9 @@ class SfOpticon::Environment < ActiveRecord::Base
   # Returns the changeset
   def changeset
     curr_snap = @sforce.gather_metadata
-    diff = SfOpticon::Diff.diff(sf_objects, curr_snap)
+    diff = SfOpticon::ChangeMonitor::Diff.diff(sf_objects, curr_snap)
     if diff.size == 0
+      @log.info { "No changes detected in #{name}" }
       return
     end
 
@@ -127,43 +103,38 @@ class SfOpticon::Environment < ActiveRecord::Base
     diff.each do |change|
       @log.info { "DIFF: #{change[:type]} - #{change[:object][:full_name]}" }
       
-      commit_message = "#{change[:type].to_s.capitalize} - #{change[:object][:full_name]}"
-
-      if change[:type] == :delete
-        commit_message = "#{change[:object][:file_name]} deleted"
-      else
-        change[:object].keys.each do |key|
-          commit_message += "#{key.to_s.camelize}: #{change[:object][key]}\n"
-        end
+      commit_message = "#{change[:type].to_s.capitalize} - #{change[:object][:full_name]}\n\n"
+      change[:object].keys.each do |key|
+        commit_message += "#{key.to_s.camelize}: #{change[:object][key]}\n"
       end
 
       case change[:type]
       when :delete
-        scm.delete_file(change[:object][:file_name])
-        scm.add_changes
-        scm.commit(commit_message, change[:object][:last_modified_by_name])
+        branch.delete_file(change[:object][:file_name])
+        branch.add_changes
+        branch.commit(commit_message, change[:object][:last_modified_by_name])
         sf_objects
           .find_by_sfobject_id(change[:object][:sfobject_id])
           .delete()
 
       when :rename
-        scm.rename_file(change[:old_object][:file_name], change[:object][:file_name])
-        scm.add_changes
-        scm.commit(commit_message, change[:object][:last_modified_by_name])        
+        branch.rename_file(change[:old_object][:file_name], change[:object][:file_name])
+        branch.add_changes
+        branch.commit(commit_message, change[:object][:last_modified_by_name])        
         sf_objects
           .find_by_sfobject_id(change[:old_object][:sfobject_id])
           .clobber(change[:object])
 
       when :add
-        scm.add_file("#{dir}/#{change[:object][:file_name]}",change[:object][:file_name])
-        scm.add_changes
-        scm.commit(commit_message, change[:object][:last_modified_by_name])        
+        branch.add_file("#{dir}/#{change[:object][:file_name]}",change[:object][:file_name])
+        branch.add_changes
+        branch.commit(commit_message, change[:object][:last_modified_by_name])        
         sf_objects << sf_objects.new(change[:object])
 
       when :modify
-        scm.clobber_file("#{dir}/#{change[:object][:file_name]}",change[:object][:file_name])
-        scm.add_changes
-        scm.commit(commit_message, change[:object][:last_modified_by_name])        
+        branch.clobber_file("#{dir}/#{change[:object][:file_name]}",change[:object][:file_name])
+        branch.add_changes
+        branch.commit(commit_message, change[:object][:last_modified_by_name])        
         sf_objects
           .find_by_sfobject_id(change[:object][:sfobject_id])
           .clobber(change[:object])
@@ -171,11 +142,10 @@ class SfOpticon::Environment < ActiveRecord::Base
       end
     end
     save!
-    scm.push(name,name)
+    branch.push
     FileUtils.remove_entry_secure(dir)
 
     @log.info { "Complete." }
     diff
   end
 end
-

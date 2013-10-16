@@ -5,39 +5,44 @@
 # through this branch class. This class belongs to 
 # {SfOpticon::Environment}.
 #
-# @author Ryan Parr
-#
 # @attr [String] name 
 #    The name of the branch. This may not reflect the
 #    name of the Salesforce environment as this could
 #    be an integration branch.
-# @attr [String] local_path
-#    This is the path to the branch on the local machines.
-# @attr [SfOpticon::Scm] scm
-#    The underlying scm interface object.
 class SfOpticon::Branch < ActiveRecord::Base
-	attr_accessible :name,
-	                :local_path,
-	                :scm
-	belongs_to :environment
+  include SfOpticon::Scm.adapter
 
-	##
-	# Creates a new branch and returns the branch object.
-	#
-	# @option opts [String] :name 
-	#    The name of the branch. 
-	# @option opts [SfOpticon::Branch] :source
-	#    The branch from which to create this branch
-	# @return [SfOpticon::Branch]
-	def self.make_branch(opts = {})
-		unless opts.has_key? :name
-			raise ArgumentError ":name is required"
-		end
+  attr_accessible :name
+  belongs_to :environment
 
-		unless opts.has_key? :source
-			raise ArgumentError ":source is required"
-		end
+  after_initialize do |branch|
+    @log = SfOpticon::Logger
 
-		
-	end
+    begin
+      init
+    end
+  end
+
+  ##
+  # If this is the creation of the branch then we want to clone
+  # the remote repository, create the branch, and check it out.
+  after_create do |branch|
+    if Dir.exist? local_path
+      FileUtils.remove_entry_secure(local_path)
+    end
+
+    make_branch
+  end
+
+  ##
+  # Handles deletion including the directory removal
+  def delete
+    FileUtils.remove_entry_secure(local_path)
+    super
+  end
+
+  ##
+  # Rebases the current branch from production
+  def rebase
+  end
 end
