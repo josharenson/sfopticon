@@ -4,6 +4,7 @@ require 'octokit'
 # @note Please see {SfOpticon::Scm::Base} for documentation
 module SfOpticon::Scm::Github 
   include SfOpticon::Scm::Base
+  attr_reader :git
 
   ##
   # Creates a remote repository on GitHub
@@ -59,7 +60,7 @@ module SfOpticon::Scm::Github
     init
 
     # Now we want to create a new branch from this and check it out
-    @git.branch(ib_name).checkout
+    git.branch(ib_name).checkout
   end
 
   ##
@@ -68,8 +69,8 @@ module SfOpticon::Scm::Github
   # @param branch [String] The branch to merge in
   def merge(branch)
     @log.info { "Merging branch #{branch} into #{name}"}
-    @git.fetch('origin')
-    @git.merge(branch)
+    merge_result = git.merge(branch)
+    @log.info { "Merge result: #{merge_result}" }
   end
 
   ##
@@ -83,7 +84,7 @@ module SfOpticon::Scm::Github
   #    arrays of sf_objects
   def calculate_changes_on_int(other_env)
     changes = { :added => [], :deleted => [] }
-    @git.diff(name, @git.current_branch).each do |commit|
+    git.diff(name, git.current_branch).each do |commit|
       case commit.type
       when 'modified', 'new'
         changes[:added].push(other_env.sf_objects.find_by_file_name(commit.path))
@@ -100,7 +101,7 @@ module SfOpticon::Scm::Github
   def clone
     @log.info { "Cloning repository to #{local_path}"}
     @git = Git.clone(auth_url, local_path)
-    @git.branch(name).checkout
+    git.branch(name).checkout
   end
 
   ##
@@ -108,14 +109,14 @@ module SfOpticon::Scm::Github
   def init
     @log.info { "Init'ing local repository #{local_path}" }
     @git = Git.init(local_path)
-    @git.branch(name).checkout
+    git.branch(name).checkout
   end
 
   ##
   # Recursively adds all changes to staging
   def add_changes
     @log.info { "Recursively adding all changes to staging" }
-    @git.add(:all => true)
+    git.add(:all => true)
   end
 
   ##
@@ -127,20 +128,20 @@ module SfOpticon::Scm::Github
   def commit(message, author = nil, author_email = nil)
     @log.info { "Committing all staged changes to local repository" }
     if author
-      @git.config('user.name', author)
+      git.config('user.name', author)
     end
 
     if author_email
-      @git.config('user.email', author_email)
+      git.config('user.email', author_email)
     end
 
-    @git.commit(message)
+    git.commit(message)
   end
 
   ##
   # Pushes changes to remote
   def push
     @log.info { "Pushing to origin" }
-    @git.push('origin', "#{name}:#{name}")
+    git.push('origin', "#{name}:#{name}")
   end
 end
