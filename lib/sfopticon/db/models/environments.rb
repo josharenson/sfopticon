@@ -2,6 +2,7 @@ require 'metaforce'
 require 'fileutils'
 
 class SfOpticon::Environment < ActiveRecord::Base
+  attr_reader :sforce
   validates_uniqueness_of :name, 
                           :message => "This organization is already configured."
   attr_accessible :name, 
@@ -68,6 +69,8 @@ class SfOpticon::Environment < ActiveRecord::Base
   # for a destructive change. We then call on to deploy_to_me.
   def deploy_destructive_changes(sf_objects)
     Dir.mktmpdir do |dir|
+      @log.debug { "Created directory #{dir} destructive changes."}
+
       # Create an empty package.xml
       File.open(File.join(dir, 'package.xml'), 'w') do |f|
         f.puts(@sforce.manifest([]).to_xml)

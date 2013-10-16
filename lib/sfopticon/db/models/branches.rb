@@ -49,28 +49,55 @@ class SfOpticon::Branch < ActiveRecord::Base
   # Rebases the current branch from production
   def rebase
     @log.info { "Rebasing #{name} from the production Salesforce instance"}
+
+    # We lock so a scanner can't change our branch out from under us
     environment.lock
-    int_branch_name = "#{name}_rebase"
+
+    # Make sure our local copy has all the data
+    update_master
 
     # Make and switch to a throwaway branch
+    int_branch_name = "#{name}_rebase"
     make_integration_branch("#{name}_rebase")
 
     # Merge in latest master
-    merge("origin/master")
+    merge
 
     # Now we commit
     add_changes
     commit("Rebasing")
 
-    changeset = calculate_changes(SfOpticon::Environment.find_by_production(true))
+    prod = SfOpticon::Environment.find_by_production(true)
+    changeset = calculate_changes_on_int(prod)
+
+    changeset.keys.each do |action|
+      changeset[action].each do |rec|
+        @log.debug { "#{action} - #{rec}"}
+      end
+    end
+
+
+    if changeset[:deleted].size == 0 && changeset[:added].size == 0
+      @log.info { "No changes from master. Rebase complete. "}
+    end
 
     if changeset[:deleted].size > 0
       environment.deploy_destructive_changes(changeset[:deleted])
     end
 
     if changeset[:added].size > 0
-      environment.deploy_productive_changes(local_path, changeset[:added])
+      dir = Dir.mktmpdir
+
+      @log.debug { "Making #{dir} for productive changes"}
+      changeset[:added].each do |sf_object|
+        FileUtils.mkdir_p(File.join(dir, File.dirname(sf_object[:file_name])))
+        FileUtils.cp(File.join(local_path, sf_object[:file_name]),
+                     File.join(dir, File.dirname(sf_object[:file_name])))
+      end
+      environment.deploy_productive_changes(dir, changeset[:added])
     end
+
+    delete_integration_branch("#{name}_rebase")
   end
 end
 

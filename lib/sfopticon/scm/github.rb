@@ -49,6 +49,16 @@ module SfOpticon::Scm::Github
   end
 
   ##
+  # Switches to master, executes a git pull, and switches back.
+  def update_master
+    @log.info { 'Updating master branch with latest from remote' }
+    git.checkout('master')
+    git.pull
+    git.branch(name).checkout
+    @log.info { 'Complete' }
+  end
+
+  ##
   # Creates an integration branch. These will be a branch of *this*
   # branch and will be a destination for merging from some other branch.
   # It is from these branches that manifests will be generated and
@@ -64,10 +74,19 @@ module SfOpticon::Scm::Github
   end
 
   ##
+  # Deletes an integration branch. These are throwaways anyways.
+  #
+  # @param ib_name [String] The name of the integration branch
+  def delete_integration_branch(ib_name)
+    git.branch(name).checkout
+    git.branch(ib_name).delete
+  end
+
+  ##
   # Performs a merge from any branch to the current branch
   # 
-  # @param branch [String] The branch to merge in
-  def merge(branch)
+  # @param branch [String] The branch to merge in (optional)
+  def merge(branch = 'origin/master')
     @log.info { "Merging branch #{branch} into #{name}"}
     merge_result = git.merge(branch)
     @log.info { "Merge result: #{merge_result}" }
@@ -85,11 +104,18 @@ module SfOpticon::Scm::Github
   def calculate_changes_on_int(other_env)
     changes = { :added => [], :deleted => [] }
     git.diff(name, git.current_branch).each do |commit|
+      @log.debug { "Adding change #{commit.type} - #{commit.path}" }
+
       case commit.type
       when 'modified', 'new'
         changes[:added].push(other_env.sf_objects.find_by_file_name(commit.path))
       when 'deleted'
-        changes[:deleted].push(environment.find_by_file_name(commit.path))
+        sf_object = environment.sf_objects.find_by_file_name(commit.path)
+        if sf_object
+          changes[:deleted].push(sf_object)
+        else
+          @log.info { "#{commit.path} doesn't exist on #{name}. Skipping deletion."}
+        end
       end
     end
 
@@ -135,7 +161,7 @@ module SfOpticon::Scm::Github
       git.config('user.email', author_email)
     end
 
-    git.commit(message)
+    git.commit(message, :allow_empty => true)
   end
 
   ##
