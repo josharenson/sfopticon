@@ -11,18 +11,30 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20131014210205) do
+ActiveRecord::Schema.define(version: 20131016041825) do
 
   create_table "branches", force: true do |t|
-    t.string "name"
+    t.string   "name"
+    t.integer  "environment_id"
+    t.datetime "created_at"
+    t.datetime "updated_at"
   end
 
   create_table "environments", force: true do |t|
-    t.string  "name",       null: false
-    t.string  "username"
-    t.string  "password"
-    t.boolean "production"
-    t.integer "branch_id"
+    t.string   "name",       null: false
+    t.string   "username"
+    t.string   "password"
+    t.boolean  "production"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
+
+  create_table "integration_branches", force: true do |t|
+    t.string   "name",                       null: false
+    t.integer  "source_environment_id",      null: false
+    t.integer  "destination_environment_id", null: false
+    t.datetime "created_at"
+    t.datetime "updated_at"
   end
 
   create_table "sf_objects", force: true do |t|
@@ -39,6 +51,8 @@ ActiveRecord::Schema.define(version: 20131014210205) do
     t.string   "object_type"
     t.string   "namespace_prefix"
     t.integer  "environment_id"
+    t.datetime "created_at"
+    t.datetime "updated_at"
   end
 
   add_index "sf_objects", ["environment_id"], name: "index_sf_objects_on_environment_id", using: :btree
