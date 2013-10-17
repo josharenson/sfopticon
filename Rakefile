@@ -32,7 +32,6 @@ task :create_db => :configuration do
 	tmp_config.delete 'database'
 
 	ActiveRecord::Base.establish_connection tmp_config
-
 	puts "Dropping database #{db_name}"
 	begin
 		ActiveRecord::Base.connection.drop_database db_name
@@ -41,7 +40,6 @@ task :create_db => :configuration do
 
 	puts "Creating database #{db_name}"
 	ActiveRecord::Base.connection.create_database db_name
-
 	puts "Database #{@db_config.database} created."
 end
 
