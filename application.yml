@@ -48,3 +48,4 @@ salesforce:
     - ApexComponent
     - ApexPage
     - ApexTrigger
+    - CustomObject

@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20131016041825) do
+ActiveRecord::Schema.define(version: 20131016080237) do
 
   create_table "branches", force: true do |t|
     t.string   "name"
@@ -27,12 +27,13 @@ ActiveRecord::Schema.define(version: 20131016041825) do
     t.boolean  "production"
     t.datetime "created_at"
     t.datetime "updated_at"
+    t.boolean  "locked"
   end
 
   create_table "integration_branches", force: true do |t|
-    t.string   "name",                       null: false
-    t.integer  "source_environment_id",      null: false
-    t.integer  "destination_environment_id", null: false
+    t.string   "name",           null: false
+    t.integer  "branch_id"
+    t.integer  "dest_branch_id", null: false
     t.datetime "created_at"
     t.datetime "updated_at"
   end
