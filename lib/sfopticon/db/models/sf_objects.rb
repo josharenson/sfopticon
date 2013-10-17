@@ -26,4 +26,27 @@ class SfOpticon::SfObject < ActiveRecord::Base
 
     sfcopy
   end
+
+  ## Some helper methods
+  ###
+
+  def dirname
+    File.dirname(file_name)
+  end
+
+  def basename
+    File.basename(file_name)
+  end
+
+  def fullpath
+    File.join(environment.branch.local_path, file_name)
+  end
+
+  ##
+  # Returns the list of files related to this object. For example,
+  # all Apex types have an associated #{file_name}-meta.xml file
+  # that needs to be copied and deployed along side the object.
+  def fileset
+    Dir.glob("#{fullpath}*")
+  end
 end

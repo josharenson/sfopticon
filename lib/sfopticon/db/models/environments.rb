@@ -66,55 +66,78 @@ class SfOpticon::Environment < ActiveRecord::Base
 
   ##
   # Rebases our branch from production
-  def rebase
-    branch.rebase
+  def integrate(src_env)
+    branch.integrate(src_env)
   end
 
   ##
-  # Takes a set of sf_objects and creates the directory/file layout
-  # for a destructive change. We then call on to deploy_to_me.
-  def deploy_destructive_changes(sf_objects)
-    Dir.mktmpdir do |dir|
-      log.debug { "Created directory #{dir} destructive changes."}
-
-      # Create an empty package.xml
-      File.open(File.join(dir, 'package.xml'), 'w') do |f|
-        f.puts(sforce.manifest([]).to_xml)
+  # Deploys code changes to this environment. 
+  #
+  # @param sf_objects [String] The list of sf_objects to deploy.
+  # @param destructive [Boolean] True if this is a destructive changeset
+  def deploy(sf_objects, destructive = false)
+    staging_dir = if destructive
+        stage_destructive(sf_objects)
+      else
+        stage_artifacts(sf_objects)
       end
+    log.info { "Deploying artifacts staged in #{staging_dir} to #{name}"}
 
-      # Now we need a proper destructiveChanges.xml
-      File.open(File.join(dir, 'destructiveChanges.xml'), 'w') do |f|
-        f.puts(sforce.manifest(sf_objects).to_xml)
-      end
+    sforce.client.deploy(staging_dir)
+      .on_complete {|job| log.info { "Deploy complete: #{job.id}"}}
+      .on_error    {|job| log.error { "Deployment failed!"}}
+      .perform
+  end  
 
-      deploy_to_me(dir)
+  ##
+  # Creates a destructive staging area.
+  # The directory must follow this layout
+  # src/
+  #   package.xml <- Must be an empty manifest
+  #   destructiveChanges.xml
+  def stage_destructive(sf_objects)
+    staging_dir = Dir.mktmpdir
+    log.info { "Creating destructive staging area at #{staging_dir}" }
+
+    File.open(File.join(staging_dir, 'package.xml'), 'w') do |f|
+      f.write(sforce.manifest([]).to_xml)
     end
+
+    File.open(File.join(staging_dir, 'destructiveChanges.xml'), 'w') do |f|
+      f.write(sforce.manifest(sf_objects).to_xml)
+    end
+
+    staging_dir
   end
 
   ##
-  # Takes a set of sf_objects and their source directory and creates
-  # a deployment package.xml, and then deploys.
-  def deploy_productive_changes(src_dir, sf_objects)
+  # Creates the staging area for a set of deployment artifacts.
+  # The directory from which we deploy must follow this layout:
+  # src/
+  #   package.xml
+  #   classes
+  #   etc.
+  def stage_artifacts(sf_objects)
+    staging_dir = Dir.mktmpdir
+    log.info { "Staging artifacts info #{staging_dir} for deployment." }
+
+    # Create layout
+    src_dir = File.join(staging_dir, 'src')
+    sf_objects.collect {|o| o.dirname }.uniq.each do |dir|
+      FileUtils.mkdir_p(File.join(src_dir, dir))
+    end
+
+    # Create the package manifest
     File.open(File.join(src_dir, 'package.xml'), 'w') do |f|
       f.puts(sforce.manifest(sf_objects).to_xml)
     end
 
-    deploy_to_me(src_dir)
-  end
+    # Copy the files into staging
+    sf_objects.each do |o|
+      FileUtils.cp(o.fileset, File.join(src_dir, o.dirname))
+    end
 
-  ##
-  # Deploys code changes to this environment. If this is a destructive change
-  # then the destructiveChanges.xml must live in the root of the src_dir
-  # parameter.
-  #
-  # @param src_dir [String] The source directory for the deployment. The 
-  #    package.xml must exist in the root of the directory.
-  def deploy_to_me(src_dir)
-    log.info { "Deploying changes from #{src_dir} to me"}
-    sforce.client.deploy(src_dir)
-      .on_complete {|job| log.info { "Deploy complete: #{job.id}"}}
-      .on_error    {|job| log.error { "Deployment failed!"}}
-      .perform
+    staging_dir
   end
 
   ##

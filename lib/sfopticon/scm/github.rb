@@ -1,5 +1,6 @@
 require 'git'
 require 'octokit'
+require 'date'
 
 # @note Please see {SfOpticon::Scm::Base} for documentation
 module SfOpticon::Scm::Github 
@@ -43,7 +44,19 @@ module SfOpticon::Scm::Github
       @git = Git.init(local_path)
       git.branch(name).checkout
     end
-  end  
+  end
+
+  ##
+  # Switches us to a branch
+  def checkout(branch)
+    git.checkout(branch)
+  end
+
+  ##
+  # Creates a tag
+  def tag(text)
+    git.tag(text)
+  end
 
   ##
   # Initializes the branch with a README.md update
@@ -59,12 +72,12 @@ module SfOpticon::Scm::Github
   end
 
   ##
-  # Switches to master, executes a git pull, and switches back.
-  def update_master
-    @log.info { 'Updating master branch with latest from remote' }
-    git.checkout('master')
+  # Switches to branch, executes a git pull, and switches back.
+  def update_branch(branch_name)
+    @log.info { "Updating #{branch_name} branch with latest from remote" }
+    checkout(branch_name)
     git.pull
-    git.branch(name).checkout
+    checkout(name)
     @log.info { 'Complete' }
   end
 
@@ -74,13 +87,19 @@ module SfOpticon::Scm::Github
   # It is from these branches that manifests will be generated and
   # deployed.
   #
-  # @param ib_name [String] The name of the integration branch
-  def make_integration_branch(ib_name)
+  # @param emv_name [String] The name of the environment that we'll 
+  #    be merging into this integration branch
+  # @return [String] The name of the integration branch
+  def make_integration_branch(env_name)
     # First just ensure that we're on the correct branch
-    init
+    git.checkout(name)
 
-    # Now we want to create a new branch from this and check it out
+    # Generate a name for the integration branch
+    timestamp = DateTime.now.strftime("%Y%m%d%H%M%S")
+    ib_name = "Integration_#{env_name}_to_#{name}_#{timestamp}"
+
     git.branch(ib_name).checkout
+    ib_name
   end
 
   ##
@@ -88,7 +107,7 @@ module SfOpticon::Scm::Github
   #
   # @param ib_name [String] The name of the integration branch
   def delete_integration_branch(ib_name)
-    git.branch(name).checkout
+    checkout(name)
     git.branch(ib_name).delete
   end
 
@@ -96,9 +115,10 @@ module SfOpticon::Scm::Github
   # Performs a merge from any branch to the current branch
   # 
   # @param branch [String] The branch to merge in (optional)
-  def merge(branch = 'master')
-    @log.info { "Merging branch #{branch} into #{name}"}
-    merge_result = git.merge(branch)
+  # @param message [String] The merge messager (optional)
+  def merge(branch = 'master', message = nil)
+    @log.info { "Merging branch #{branch} into #{git.current_branch}"}
+    merge_result = git.merge(branch, "Merged from #{branch}")
     @log.info { "Merge result: #{merge_result}" }
   end
 
@@ -175,6 +195,6 @@ module SfOpticon::Scm::Github
   # Pushes changes to remote
   def push
     @log.info { "Pushing to origin" }
-    git.push('origin', "#{name}:#{name}")
+    git.push('origin', "#{name}:#{name}", true)
   end
 end

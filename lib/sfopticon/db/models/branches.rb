@@ -44,67 +44,66 @@ class SfOpticon::Branch < ActiveRecord::Base
   end
 
   ##
-  # Rebases the current branch from production
-  def rebase
-    log.info { "Rebasing #{name} from the production Salesforce instance"}
+  # Integrates changes from any given environment into this
+  # env. This will merge the changes in the underlying scm
+  # as well as performing the deploy.
+  #
+  # @param src_env [SfOpticon::Environment] The environment to merge in
+  def integrate(src_env)
+    log.info { "Integrating changes in #{src_env} into #{name}."}
 
     # We lock so a scanner can't change our branch out from under us
+    src_env.lock
     environment.lock
 
-    # Make sure our local copy has all the data
-    update_master
+    # Make sure our local master branch has all the data
+    update_branch(src_env.branch.name)
 
     # Make and switch to a throwaway branch
-    int_branch_name = "#{name}_rebase"
-    make_integration_branch("#{name}_rebase")
+    int_branch_name = make_integration_branch(src_env.name)
+    checkout(int_branch_name)
 
-    # Merge in latest master
-    merge
+    # Merge in latest from the source environment
+    merge(src_env.branch.name)
 
-    # Now we commit
-    add_changes
-    commit("Rebasing")
-
-    prod = SfOpticon::Environment.find_by_production(true)
-    changeset = calculate_changes_on_int(prod)
-
-    changeset.keys.each do |action|
-      changeset[action].each do |rec|
-        log.debug { "#{action} - #{rec}"}
+    changeset = calculate_changes_on_int(src_env)
+    log.debug {
+      changeset.keys.each do |action|
+        changeset[action].each do |rec|
+          "#{action} - #{rec}"
+        end
       end
-    end
+    }
 
-    if changeset[:deleted].size == 0 && changeset[:added].size == 0
+    has_changes = !(changeset[:deleted].empty? && changeset[:added].empty?)
+
+    if has_changes
+      if changeset[:deleted].size > 0
+        environment.deploy(changeset[:deleted], true)
+      end
+
+      if changeset[:added].size > 0
+        environment.deploy(changeset[:added])
+      end
+
+      # If that was successful we're going to merge the changes
+      # back into our own branch, tag, and push to origin.
+      checkout(name)
+      merge(int_branch_name)
+      tag(int_branch_name)
+
+      # If that was successful we push to the repository
+      push
+
+      # And make sure to snapshot the environment
+      environment.snapshot
+    else
       log.info { "No changes from master. Rebase complete. "}
     end
 
-    if changeset[:deleted].size > 0
-      environment.deploy_destructive_changes(changeset[:deleted])
-    end
-
-    if changeset[:added].size > 0
-      dir = Dir.mktmpdir
-
-      log.debug { "Making #{dir} for productive changes"}
-      changeset[:added].each do |sf_object|
-        FileUtils.mkdir_p(File.join(dir, File.dirname(sf_object[:file_name])))
-        FileUtils.cp(File.join(local_path, sf_object[:file_name]),
-                     File.join(dir, File.dirname(sf_object[:file_name])))
-
-        # Meta files for apex
-        if File.exist? File.join(local_path, "#{sf_object[:file_name]}-meta.xml")
-          FileUtils.cp(File.join(local_path, "#{sf_object[:file_name]}-meta.xml"),
-                       File.join(dir, File.dirname(sf_object[:file_name])))
-        end
-      end
-      environment.deploy_productive_changes(dir, changeset[:added])
-    end
-
-    # If that was successful we push to the repository
-    push
-
-    delete_integration_branch("#{name}_rebase")
+    delete_integration_branch(int_branch_name)
     environment.unlock
+    src_env.lock
   end
 end
 
