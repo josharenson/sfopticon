@@ -2,7 +2,7 @@ require 'metaforce'
 require 'fileutils'
 
 class SfOpticon::Environment < ActiveRecord::Base
-  attr_reader :sforce
+  attr_reader :sforce, :log, :config
   validates_uniqueness_of :name, 
                           :message => "This organization is already configured."
   attr_accessible :name, 
@@ -33,12 +33,12 @@ class SfOpticon::Environment < ActiveRecord::Base
     end
 
     create_branch(name: production ? 'master' : name)
-
     snapshot
 
-    # We ignore the actual metadata in salesforce unless this is production.
-    # We do this because we want them to start at the same logical place, as
-    # though the non-production environment was refreshed even if it wasn't.
+    # We ignore the actual metadata objects in salesforce unless this is 
+    # production. We do this because we want them to start at the same logical 
+    # place, as though the non-production environment was refreshed even if it 
+    # wasn't.
     if production
       sforce.retrieve :manifest => @sforce.manifest(sf_objects),
                       :extract_to => branch.local_path
@@ -75,7 +75,7 @@ class SfOpticon::Environment < ActiveRecord::Base
   # for a destructive change. We then call on to deploy_to_me.
   def deploy_destructive_changes(sf_objects)
     Dir.mktmpdir do |dir|
-      @log.debug { "Created directory #{dir} destructive changes."}
+      log.debug { "Created directory #{dir} destructive changes."}
 
       # Create an empty package.xml
       File.open(File.join(dir, 'package.xml'), 'w') do |f|
@@ -110,10 +110,10 @@ class SfOpticon::Environment < ActiveRecord::Base
   # @param src_dir [String] The source directory for the deployment. The 
   #    package.xml must exist in the root of the directory.
   def deploy_to_me(src_dir)
-    @log.info { "Deploying changes from #{src_dir} to me"}
+    log.info { "Deploying changes from #{src_dir} to me"}
     sforce.client.deploy(src_dir)
-      .on_complete {|job| @log.info { "Deploy complete: #{job.id}"}}
-      .on_error    {|job| @log.error { "Deployment failed!"}}
+      .on_complete {|job| log.info { "Deploy complete: #{job.id}"}}
+      .on_error    {|job| log.error { "Deployment failed!"}}
       .perform
   end
 
@@ -139,7 +139,7 @@ class SfOpticon::Environment < ActiveRecord::Base
   # configured types.
   def snapshot
     ## Env has to have it's current sf_objects wiped out
-    @log.info { "Deleting all sfobjects for #{name}" }
+    log.info { "Deleting all sfobjects for #{name}" }
     sf_objects.delete_all
     
     SfOpticon::SfObject.transaction do
@@ -159,7 +159,7 @@ class SfOpticon::Environment < ActiveRecord::Base
     curr_snap = sforce.gather_metadata
     diff = SfOpticon::ChangeMonitor::Diff.diff(sf_objects, curr_snap)
     if diff.size == 0
-      @log.info { "No changes detected in #{name}" }
+      log.info { "No changes detected in #{name}" }
       return
     end
 
@@ -179,7 +179,7 @@ class SfOpticon::Environment < ActiveRecord::Base
 
     # Now we replay the changes into the repo and the database
     diff.each do |change|
-      @log.info { "DIFF: #{change[:type]} - #{change[:object][:full_name]}" }
+      log.info { "DIFF: #{change[:type]} - #{change[:object][:full_name]}" }
 
       commit_message = "#{change[:type].to_s.capitalize} - #{change[:object][:full_name]}\n\n"
       if change[:type] == :delete
@@ -257,7 +257,7 @@ class SfOpticon::Environment < ActiveRecord::Base
     branch.push
     FileUtils.remove_entry_secure(dir)
 
-    @log.info { "Complete." }
+    log.info { "Complete." }
     diff
   end
 end

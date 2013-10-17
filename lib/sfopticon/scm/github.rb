@@ -36,6 +36,16 @@ module SfOpticon::Scm::Github
   end
 
   ##
+  # Instantiate the local repo objects
+  def init
+    if Dir.exist? local_path
+      @log.info { "Init'ing local repository #{local_path}" }
+      @git = Git.init(local_path)
+      git.branch(name).checkout
+    end
+  end  
+
+  ##
   # Initializes the branch with a README.md update
   def make_branch
     @log.info { "Creating branch #{name}" }
@@ -74,7 +84,7 @@ module SfOpticon::Scm::Github
   end
 
   ##
-  # Deletes an integration branch. These are throwaways anyways.
+  # Deletes an integration branch.
   #
   # @param ib_name [String] The name of the integration branch
   def delete_integration_branch(ib_name)
@@ -132,14 +142,6 @@ module SfOpticon::Scm::Github
   def clone
     @log.info { "Cloning repository to #{local_path}"}
     @git = Git.clone(auth_url, local_path)
-    git.branch(name).checkout
-  end
-
-  ##
-  # Instantiate the local repo objects
-  def init
-    @log.info { "Init'ing local repository #{local_path}" }
-    @git = Git.init(local_path)
     git.branch(name).checkout
   end
 

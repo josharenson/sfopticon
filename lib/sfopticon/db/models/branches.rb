@@ -14,17 +14,15 @@ require 'pp'
 class SfOpticon::Branch < ActiveRecord::Base
   include SfOpticon::Scm.adapter
 
+  attr_reader :log
+
   attr_accessible :name
   belongs_to :environment
   has_many :integration_branches
 
   after_initialize do |branch|
     @log = SfOpticon::Logger
-    begin
-      init
-    rescue => e
-      @log.debug { "Failed to init"}
-    end
+    init
   end
 
   ##
@@ -48,7 +46,7 @@ class SfOpticon::Branch < ActiveRecord::Base
   ##
   # Rebases the current branch from production
   def rebase
-    @log.info { "Rebasing #{name} from the production Salesforce instance"}
+    log.info { "Rebasing #{name} from the production Salesforce instance"}
 
     # We lock so a scanner can't change our branch out from under us
     environment.lock
@@ -72,12 +70,12 @@ class SfOpticon::Branch < ActiveRecord::Base
 
     changeset.keys.each do |action|
       changeset[action].each do |rec|
-        @log.debug { "#{action} - #{rec}"}
+        log.debug { "#{action} - #{rec}"}
       end
     end
 
     if changeset[:deleted].size == 0 && changeset[:added].size == 0
-      @log.info { "No changes from master. Rebase complete. "}
+      log.info { "No changes from master. Rebase complete. "}
     end
 
     if changeset[:deleted].size > 0
@@ -87,7 +85,7 @@ class SfOpticon::Branch < ActiveRecord::Base
     if changeset[:added].size > 0
       dir = Dir.mktmpdir
 
-      @log.debug { "Making #{dir} for productive changes"}
+      log.debug { "Making #{dir} for productive changes"}
       changeset[:added].each do |sf_object|
         FileUtils.mkdir_p(File.join(dir, File.dirname(sf_object[:file_name])))
         FileUtils.cp(File.join(local_path, sf_object[:file_name]),
@@ -101,6 +99,9 @@ class SfOpticon::Branch < ActiveRecord::Base
       end
       environment.deploy_productive_changes(dir, changeset[:added])
     end
+
+    # If that was successful we push to the repository
+    push
 
     delete_integration_branch("#{name}_rebase")
     environment.unlock
