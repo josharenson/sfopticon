@@ -58,7 +58,14 @@ module SfOpticon::Scm::Github
   ##
   # Instantiate the local repo objects
   def init
-    @git = Git.init(local_path)
+    begin
+      @git = Git.init(local_path)
+    rescue => e
+      @log.info { "Failed to init #{local_path}" }
+      if Dir.exist? local_path
+        @log.info { "#{local_path} doesn't exist. - noop" }
+      end
+    end
     @git.checkout(name)
   end
 
