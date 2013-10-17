@@ -86,7 +86,7 @@ module SfOpticon::Scm::Github
   # Performs a merge from any branch to the current branch
   # 
   # @param branch [String] The branch to merge in (optional)
-  def merge(branch = 'origin/master')
+  def merge(branch = 'master')
     @log.info { "Merging branch #{branch} into #{name}"}
     merge_result = git.merge(branch)
     @log.info { "Merge result: #{merge_result}" }
@@ -108,7 +108,12 @@ module SfOpticon::Scm::Github
 
       case commit.type
       when 'modified', 'new'
-        changes[:added].push(other_env.sf_objects.find_by_file_name(commit.path))
+        sf_object = other_env.sf_objects.find_by_file_name(commit.path)
+        if sf_object
+          changes[:added].push(sf_object)
+        else
+          @log.info { "#{commit.path} isn't in the list of sf_objects." }
+        end
       when 'deleted'
         sf_object = environment.sf_objects.find_by_file_name(commit.path)
         if sf_object

@@ -76,7 +76,6 @@ class SfOpticon::Branch < ActiveRecord::Base
       end
     end
 
-
     if changeset[:deleted].size == 0 && changeset[:added].size == 0
       @log.info { "No changes from master. Rebase complete. "}
     end
@@ -93,11 +92,18 @@ class SfOpticon::Branch < ActiveRecord::Base
         FileUtils.mkdir_p(File.join(dir, File.dirname(sf_object[:file_name])))
         FileUtils.cp(File.join(local_path, sf_object[:file_name]),
                      File.join(dir, File.dirname(sf_object[:file_name])))
+
+        # Meta files for apex
+        if File.exist? File.join(local_path, "#{sf_object[:file_name]}-meta.xml")
+          FileUtils.cp(File.join(local_path, "#{sf_object[:file_name]}-meta.xml"),
+                       File.join(dir, File.dirname(sf_object[:file_name])))
+        end
       end
       environment.deploy_productive_changes(dir, changeset[:added])
     end
 
     delete_integration_branch("#{name}_rebase")
+    environment.unlock
   end
 end
 
