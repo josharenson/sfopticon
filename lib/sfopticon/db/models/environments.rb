@@ -190,9 +190,27 @@ class SfOpticon::Environment < ActiveRecord::Base
         end
       end
 
+      # We have to copy the metadata files for Apex classes since they don't
+      # embed their information on their own.
+      meta_xml = if File.exist? "#{dir}/#{change[:object][:file_name]}-meta.xml"
+        true
+      else
+        false
+      end
+
+      # Shortcuts until this trash is refactored out
+      if change.has_key? :old_object
+        old_file = change[:old_object][:file_name]
+      end
+      new_file = change[:object][:file_name]
+
       case change[:type]
       when :delete
-        branch.delete_file(change[:object][:file_name])
+        branch.delete_file(new_file)
+        if meta_xml
+          branch.delete_file("#{new_file}-meta.xml")
+        end
+
         branch.add_changes
         branch.commit(commit_message, change[:object][:last_modified_by_name])
         sf_objects
@@ -200,7 +218,11 @@ class SfOpticon::Environment < ActiveRecord::Base
           .delete()
 
       when :rename
-        branch.rename_file(change[:old_object][:file_name], change[:object][:file_name])
+        branch.rename_file(old_file, new_file)
+        if meta_xml
+          branch.rename("#{old_file}-meta.xml", "#{new_file}-meta.xml")
+        end
+
         branch.add_changes
         branch.commit(commit_message, change[:object][:last_modified_by_name])        
         sf_objects
@@ -208,13 +230,21 @@ class SfOpticon::Environment < ActiveRecord::Base
           .clobber(change[:object])
 
       when :add
-        branch.add_file("#{dir}/#{change[:object][:file_name]}",change[:object][:file_name])
+        branch.add_file("#{dir}/#{new_file}", new_file)
+        if meta_xml
+          branch.add_file("#{dir}/#{new_file}-meta.xml", "#{new_file}-meta.xml")
+        end
+
         branch.add_changes
         branch.commit(commit_message, change[:object][:last_modified_by_name])        
         sf_objects << sf_objects.new(change[:object])
 
       when :modify
-        branch.clobber_file("#{dir}/#{change[:object][:file_name]}",change[:object][:file_name])
+        branch.clobber_file("#{dir}/#{new_file}", new_file)
+        if meta_xml
+          branch.clobber_file("#{dir}/#{new_file}-meta.xml", "#{new_file}-meta.xml")
+        end
+
         branch.add_changes
         branch.commit(commit_message, change[:object][:last_modified_by_name])        
         sf_objects
