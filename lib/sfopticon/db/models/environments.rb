@@ -35,11 +35,17 @@ class SfOpticon::Environment < ActiveRecord::Base
     create_branch(name: production ? 'master' : name)
 
     snapshot
-    @sforce.retrieve :manifest => @sforce.manifest(sf_objects),
-                     :extract_to => branch.local_path
-    branch.add_changes
-    branch.commit("Initial push of production code")
-    branch.push                
+
+    # We ignore the actual metadata in salesforce unless this is production.
+    # We do this because we want them to start at the same logical place, as
+    # though the non-production environment was refreshed even if it wasn't.
+    if production
+      sforce.retrieve :manifest => @sforce.manifest(sf_objects),
+                      :extract_to => branch.local_path
+      branch.add_changes
+      branch.commit("Initial push of production code")
+      branch.push
+    end
   end
 
   ##
@@ -73,12 +79,12 @@ class SfOpticon::Environment < ActiveRecord::Base
 
       # Create an empty package.xml
       File.open(File.join(dir, 'package.xml'), 'w') do |f|
-        f.puts(@sforce.manifest([]).to_xml)
+        f.puts(sforce.manifest([]).to_xml)
       end
 
       # Now we need a proper destructiveChanges.xml
       File.open(File.join(dir, 'destructiveChanges.xml'), 'w') do |f|
-        f.puts(@sforce.manifest(sf_objects).to_xml)
+        f.puts(sforce.manifest(sf_objects).to_xml)
       end
 
       deploy_to_me(dir)
@@ -90,7 +96,7 @@ class SfOpticon::Environment < ActiveRecord::Base
   # a deployment package.xml, and then deploys.
   def deploy_productive_changes(src_dir, sf_objects)
     File.open(File.join(src_dir, 'package.xml'), 'w') do |f|
-      f.puts(@sforce.manifest(sf_objects).to_xml)
+      f.puts(sforce.manifest(sf_objects).to_xml)
     end
 
     deploy_to_me(src_dir)
@@ -105,7 +111,7 @@ class SfOpticon::Environment < ActiveRecord::Base
   #    package.xml must exist in the root of the directory.
   def deploy_to_me(src_dir)
     @log.info { "Deploying changes from #{src_dir} to me"}
-    @sforce.client.deploy(src_dir)
+    sforce.client.deploy(src_dir)
       .on_complete {|job| @log.info { "Deploy complete: #{job.id}"}}
       .on_error    {|job| @log.error { "Deployment failed!"}}
       .perform
@@ -137,7 +143,7 @@ class SfOpticon::Environment < ActiveRecord::Base
     sf_objects.delete_all
     
     SfOpticon::SfObject.transaction do
-      @sforce.gather_metadata.each do |o|
+      sforce.gather_metadata.each do |o|
         sf_objects << SfOpticon::SfObject.create(o)
       end
       save!
@@ -150,7 +156,7 @@ class SfOpticon::Environment < ActiveRecord::Base
   #
   # Returns the changeset
   def changeset
-    curr_snap = @sforce.gather_metadata
+    curr_snap = sforce.gather_metadata
     diff = SfOpticon::ChangeMonitor::Diff.diff(sf_objects, curr_snap)
     if diff.size == 0
       @log.info { "No changes detected in #{name}" }
@@ -169,7 +175,7 @@ class SfOpticon::Environment < ActiveRecord::Base
 
     # Retrieve the changes into a temporary directory
     dir = Dir.mktmpdir("changeset")
-    @sforce.retrieve(:manifest => @sforce.manifest(mods), :extract_to => dir)
+    sforce.retrieve(:manifest => sforce.manifest(mods), :extract_to => dir)
 
     # Now we replay the changes into the repo and the database
     diff.each do |change|
