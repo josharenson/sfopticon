@@ -13,6 +13,30 @@ $:.unshift File.join(ENV['SFOPTICON_HOME'], 'lib')
 require 'sfopticon'
 
 class EnvironmentCLI < Thor
+	option :org, :type => :string, :required => true
+	desc "lock", "Locks the environment"
+	def lock
+		env = SfOpticon::Environment.find_by_name(options[:org])
+		if env
+			env.lock
+			puts "#{env.name} locked."
+		else
+			abort "Environment \"#{options[:org]}\" not found."
+		end
+	end
+
+	option :org, :type => :string, :required => true
+	desc "unlock", "Unlocks the environment"
+	def unlock
+		env = SfOpticon::Environment.find_by_name(options[:org])
+		if env
+			env.unlock
+			puts "#{env.name} unlocked."
+		else
+			abort "Environment \"#{options[:org]}\" not found."
+		end
+	end
+
 	desc "list", "List existing Salesforce organizations"
 	def list
 		env_list = SfOpticon::Environment.all

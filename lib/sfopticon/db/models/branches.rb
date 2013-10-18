@@ -85,21 +85,27 @@ class SfOpticon::Branch < ActiveRecord::Base
       if changeset[:added].size > 0
         environment.deploy(changeset[:added])
       end
-
-      # If that was successful we're going to merge the changes
-      # back into our own branch, tag, and push to origin.
-      checkout(name)
-      merge(int_branch_name)
-      tag(int_branch_name)
-
-      # If that was successful we push to the repository
-      push
-
-      # And make sure to snapshot the environment
-      environment.snapshot
     else
       log.info { "No changes from master. Rebase complete. "}
     end
+
+    # It's possible for the 2 environments to be a little out of
+    # sync. So even if there are no changes, that could just mean
+    # it's a delete that didn't already exist in destination. In
+    # that case we still want to do the merge so it doesn't continue
+    # to try with each integration.
+
+    # If that was successful we're going to merge the changes
+    # back into our own branch, tag, and push to origin.
+    checkout(name)
+    merge(int_branch_name)
+    add_tag(int_branch_name)
+
+    # If that was successful we push to the repository
+    push
+
+    # And make sure to snapshot the environment
+    environment.snapshot    
 
     delete_integration_branch(int_branch_name)
     environment.unlock

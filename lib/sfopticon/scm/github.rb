@@ -54,8 +54,8 @@ module SfOpticon::Scm::Github
 
   ##
   # Creates a tag
-  def tag(text)
-    git.tag(text)
+  def add_tag(text)
+    git.add_tag(text)
   end
 
   ##
@@ -107,6 +107,7 @@ module SfOpticon::Scm::Github
   #
   # @param ib_name [String] The name of the integration branch
   def delete_integration_branch(ib_name)
+    @log.info { "Deleting integration branch #{ib_name}"}
     checkout(name)
     git.branch(ib_name).delete
   end
