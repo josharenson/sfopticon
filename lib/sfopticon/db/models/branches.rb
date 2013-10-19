@@ -109,7 +109,7 @@ class SfOpticon::Branch < ActiveRecord::Base
 
     delete_integration_branch(int_branch_name)
     environment.unlock
-    src_env.lock
+    src_env.unlock
   end
 end
 
