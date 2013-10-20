@@ -31,6 +31,10 @@ class SfOpticon::Environment < ActiveRecord::Base
     if production
       # If we're a production environment then we need to create the remote
       # repository
+      unless @sforce.credentials_are_valid?
+        puts "Could not login to Salesforce! Please verify credentials."
+        raise
+      end
       SfOpticon::Scm.adapter.create_remote_repository(name)
     end
 

@@ -29,6 +29,17 @@ class SfOpticon::Salesforce
 		@client
 	end
 
+
+        def credentials_are_valid?
+          begin
+            login = Metaforce::Login.new @env.username, @env.password, @env.securitytoken
+            login.login
+          rescue
+            return false
+          end
+            return true
+        end
+
 	# Gathers all metadata information for the list of metadata types, if provided.
 	# If no metadata types are provided it will gather for the configured default list.
 	def gather_metadata(type_list = [])
