@@ -1,4 +1,5 @@
 require 'metaforce'
+require 'metaforce/reporters/deploy_reporter'
 require 'fileutils'
 
 class SfOpticon::Environment < ActiveRecord::Base
@@ -83,10 +84,11 @@ class SfOpticon::Environment < ActiveRecord::Base
       end
     log.info { "Deploying artifacts staged in #{staging_dir} to #{name}"}
 
-    sforce.client.deploy(staging_dir)
-      .on_complete {|job| log.info { "Deploy complete: #{job.id}"}}
-      .on_error    {|job| log.error { "Deployment failed!"}}
-      .perform
+     sforce.client.deploy(File.join(staging_dir,'src'), { :run_all_tests => false })
+        .on_complete { |job| log.info job.result }
+        .on_error {|job| log.error { "Error: #{job.result.inspect}" } }
+        .on_poll {|job| log.info "Polling..." }
+        .perform
   end  
 
   ##
@@ -97,13 +99,15 @@ class SfOpticon::Environment < ActiveRecord::Base
   #   destructiveChanges.xml
   def stage_destructive(sf_objects)
     staging_dir = Dir.mktmpdir
+    src_dir = File.join(staging_dir, 'src')
+    Dir.mkdir src_dir
     log.info { "Creating destructive staging area at #{staging_dir}" }
 
-    File.open(File.join(staging_dir, 'package.xml'), 'w') do |f|
+    File.open(File.join(src_dir, 'package.xml'), 'w') do |f|
       f.write(sforce.manifest([]).to_xml)
     end
 
-    File.open(File.join(staging_dir, 'destructiveChanges.xml'), 'w') do |f|
+    File.open(File.join(src_dir, 'destructiveChanges.xml'), 'w') do |f|
       f.write(sforce.manifest(sf_objects).to_xml)
     end
 

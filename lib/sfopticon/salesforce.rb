@@ -17,17 +17,11 @@ class SfOpticon::Salesforce
 		unless @client
 			Metaforce.configure do |c|
 				c.host = 'test.salesforce.com' unless @env.production
-				c.log = SfOpticon::Logger
+				c.log = false
 			end
 
-			# For my testing
-			Metaforce.configure do |c|
-				c.host = 'test.salesforce.com'
-				c.log = SfOpticon::Logger
-			end			
-
 			@client = Metaforce::Metadata::Client.new :username => @env.username, 
-		                                              :password => @env.password
+		                                                  :password => @env.password
 		end
 
 		@client
