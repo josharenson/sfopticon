@@ -109,6 +109,7 @@ class EnvironmentCLI < Thor
 	option :name, :type => :string, :required => true
 	option :username, :type => :string, :required => false
 	option :password, :type => :string, :required => false
+        option :securitytoken, :type => :string, :required => false
 	option :production, :type => :boolean, :default => false
 	desc "create", "Create a new Salesforce organization"
 	def create
@@ -142,6 +143,11 @@ class EnvironmentCLI < Thor
 			print "Salesforce Password: "
 			opts_copy[:password] = STDIN.noecho(&:gets).chomp
 		end
+
+                if not opts_copy[:securitytoken]
+                  print "\nSalseforce security token (optional): "
+                  opts_copy[:securitytoken] = $stdin.gets.chomp
+                end
 
 		begin
 			env = SfOpticon::Environment.create(opts_copy)

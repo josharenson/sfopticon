@@ -9,6 +9,7 @@ class SfOpticon::Environment < ActiveRecord::Base
   attr_accessible :name, 
                   :username, 
                   :password,
+                  :securitytoken,
                   :production,
                   :locked
                 
