@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20131016080237) do
+ActiveRecord::Schema.define(version: 20131020225838) do
 
   create_table "branches", force: true do |t|
     t.string   "name"
@@ -21,9 +21,10 @@ ActiveRecord::Schema.define(version: 20131016080237) do
   end
 
   create_table "environments", force: true do |t|
-    t.string   "name",       null: false
+    t.string   "name",          null: false
     t.string   "username"
     t.string   "password"
+    t.string   "securitytoken"
     t.boolean  "production"
     t.datetime "created_at"
     t.datetime "updated_at"

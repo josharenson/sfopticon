@@ -20,8 +20,10 @@ class SfOpticon::Salesforce
 				c.log = false
 			end
 
+
 			@client = Metaforce::Metadata::Client.new :username => @env.username, 
-		                                                  :password => @env.password
+		                                            :password => @env.password,
+		                                      :security_token => @env.securitytoken
 		end
 
 		@client
