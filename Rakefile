@@ -18,15 +18,15 @@ ActiveRecordMigrations.configure do |c|
 end
 ActiveRecordMigrations.load_tasks
 
-task :configuration do
+task :db_configuration do
 	@db_config = SfOpticon::Settings.database
 end
 
-task :connect_to_db => :configuration do
+task :connect_to_db => :db_configuration do
 	ActiveRecord::Base.establish_connection @db_config
 end
 
-task :create_db => :configuration do
+task :create_db => :db_configuration do
 	db_name = @db_config.database
 	tmp_config = @db_config.dup
 	tmp_config.delete 'database'
