@@ -9,16 +9,18 @@ class SfOpticon::Salesforce
 	def initialize(env)
 		@env = env
 		@log = SfOpticon::Logger
+
+		Metaforce.configure do |c|
+			c.host = 'test.salesforce.com' unless @env.production
+			c.log = false
+		end
 	end
 
 	# @!attribute client
 	#    @return [Metaforce::Metadata::Client]
 	def client
 		unless @client
-			Metaforce.configure do |c|
-				c.host = 'test.salesforce.com' unless @env.production
-				c.log = false
-			end
+	
 
 
 			@client = Metaforce::Metadata::Client.new :username => @env.username, 
