@@ -72,12 +72,20 @@ module SfOpticon::Scm::Github
   end
 
   ##
-  # Switches to branch, executes a git pull, and switches back.
+  # Executes a git pull
   def update_branch(branch_name)
+    curr_branch = git.current_branch
+
     @log.info { "Updating #{branch_name} branch with latest from remote" }
+ 
+    # First we have to make sure we have the remote branch info
+    checkout('master')
+    git.fetch
+
     checkout(branch_name)
     git.pull
-    checkout(name)
+    
+    checkout(curr_branch)
     @log.info { 'Complete' }
   end
 
