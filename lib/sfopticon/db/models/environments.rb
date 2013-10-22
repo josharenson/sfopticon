@@ -26,7 +26,7 @@ class SfOpticon::Environment < ActiveRecord::Base
   ##
   # This method is called when an environment is first created. This allows
   # us to reach out and create the remote repository if needed, or the branch.
-  # This will also clone the branch and speak into the README.md
+  # This will also clone the branch.
   after_create do |env|
     if production
       # If we're a production environment then we need to create the remote
