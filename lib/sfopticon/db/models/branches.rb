@@ -1,13 +1,13 @@
 require 'pp'
 
 ##
-# Class for managing branches. 
+# Class for managing branches.
 #
 # All branch operations (merge etc.) should be performed
-# through this branch class. This class belongs to 
+# through this branch class. This class belongs to
 # {SfOpticon::Environment}.
 #
-# @attr [String] name 
+# @attr [String] name
 #    The name of the branch. This may not reflect the
 #    name of the Salesforce environment as this could
 #    be an integration branch.
@@ -105,36 +105,10 @@ class SfOpticon::Branch < ActiveRecord::Base
     push
 
     # And make sure to snapshot the environment
-    environment.snapshot    
+    environment.snapshot
 
     delete_integration_branch(int_branch_name)
     environment.unlock
     src_env.unlock
   end
 end
-
-=begin
-g.object('313163f22600b4128b88b3873b2c2880a136af8c').diff_parent.each do |df|
-  [:patch, :path, :mode, :src, :dst, :type].each do |t|
-    puts "#{t.to_s} -> #{df.send(t)}"
-  end
-end
-
-g.log.between('master','ib_name').each do |c|
-  ary = []
-  g.object(c.sha).diff_parent.each {|df| ary.unshift(df) }
-  ary.each do |df|
-    [:patch, :path, :mode, :src, :dst, :type].each do |t|
-      puts "#{t.to_s} -> #{df.send(t)}"
-    end
-    puts "--------------------"
-  end
-end
-
-g.diff('master','ib_name').each do |c|
-    [:patch, :path, :mode, :src, :dst, :type].each do |t|
-      puts "#{t.to_s} -> #{c.send(t)}"
-    end
-    puts "--------------------"
-end
-=end

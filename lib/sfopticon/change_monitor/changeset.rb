@@ -1,4 +1,4 @@
 class SfOpticon::Changes
-	class Changeset
-	end
+  class Changeset
+  end
 end
