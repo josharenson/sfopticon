@@ -1,22 +1,22 @@
 class SfOpticon
-	# Config
-	require 'rubygems'
-	require 'bundler/setup'
+  # Config
+  require 'rubygems'
+  require 'bundler/setup'
 
-	## Vendor
-	require 'active_record'
-	require 'active_support/core_ext/hash'
-	require 'protected_attributes'
-	require 'deep_symbolize'
+  ## Vendor
+  require 'active_record'
+  require 'active_support/core_ext/hash'
+  require 'protected_attributes'
+  require 'deep_symbolize'
 
-	## Settings needs to be required before any project local libs
-	require 'sfopticon/settings'
-	## There, now go ahead
+  ## Settings needs to be required before any project local libs
+  require 'sfopticon/settings'
+  ## There, now go ahead
 
-	require 'sfopticon/scm'
-	require 'sfopticon/scm/base'
-	require 'sfopticon/logger'
-	require 'sfopticon/db/init'
-	require 'sfopticon/salesforce'
-	require 'sfopticon/change_monitor/diff'
+  require 'sfopticon/scm'
+  require 'sfopticon/scm/base'
+  require 'sfopticon/logger'
+  require 'sfopticon/db/init'
+  require 'sfopticon/salesforce'
+  require 'sfopticon/change_monitor/diff'
 end
