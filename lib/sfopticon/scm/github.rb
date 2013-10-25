@@ -137,7 +137,7 @@ module SfOpticon::Scm::Github
   # so we have enough information for a manifest.
   #
   # @param other_env [SfOpticon::Environment] The environment we're merging in
-  # @return changes [Hash] A hash with 2 keys, :added and :deleted, which are
+  # @return [Hash] A hash with 2 keys, :added and :deleted, which are
   #    arrays of sf_objects
   def calculate_changes_on_int(other_env)
     changes = { :added => [], :deleted => [] }

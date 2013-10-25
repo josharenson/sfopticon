@@ -43,7 +43,7 @@ class SfOpticon::SfObject < ActiveRecord::Base
 
   ##
   # Returns the list of files related to this object. For example,
-  # all Apex types have an associated #{file_name}-meta.xml file
+  # all Apex types have an associated <file_name>-meta.xml file
   # that needs to be copied and deployed along side the object.
   def fileset
     Dir.glob("#{fullpath}*")

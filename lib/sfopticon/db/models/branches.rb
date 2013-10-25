@@ -25,7 +25,6 @@ class SfOpticon::Branch < ActiveRecord::Base
     init
   end
 
-  ##
   # If this is the creation of the branch then we want to clone
   # the remote repository, create the branch, and check it out.
   after_create do |branch|
