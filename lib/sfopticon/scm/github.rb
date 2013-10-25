@@ -94,7 +94,7 @@ module SfOpticon::Scm::Github
   # It is from these branches that manifests will be generated and
   # deployed.
   #
-  # @param emv_name [String] The name of the environment that we'll
+  # @param env_name [String] The name of the environment that we'll
   #    be merging into this integration branch
   # @return [String] The name of the integration branch
   def make_integration_branch(env_name)
