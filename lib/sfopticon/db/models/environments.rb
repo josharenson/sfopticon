@@ -4,15 +4,15 @@ require 'fileutils'
 
 class SfOpticon::Environment < ActiveRecord::Base
   attr_reader :sforce, :log, :config
-  validates_uniqueness_of :name, 
-                          :message => "This organization is already configured."
-  attr_accessible :name, 
-                  :username, 
-                  :password,
-                  :securitytoken,
-                  :production,
-                  :locked
-                
+  validates_uniqueness_of :name,
+    :message => "This organization is already configured."
+  attr_accessible :name,
+    :username,
+    :password,
+    :securitytoken,
+    :production,
+    :locked
+
   has_many :sf_objects, :dependent => :destroy
   has_one  :branch
 
@@ -41,13 +41,13 @@ class SfOpticon::Environment < ActiveRecord::Base
     create_branch(name: production ? 'master' : name)
     snapshot
 
-    # We ignore the actual metadata objects in salesforce unless this is 
-    # production. We do this because we want them to start at the same logical 
-    # place, as though the non-production environment was refreshed even if it 
+    # We ignore the actual metadata objects in salesforce unless this is
+    # production. We do this because we want them to start at the same logical
+    # place, as though the non-production environment was refreshed even if it
     # wasn't.
     if production
       sforce.retrieve :manifest => @sforce.manifest(sf_objects),
-                      :extract_to => branch.local_path
+        :extract_to => branch.local_path
       branch.add_changes
       branch.commit("Initial push of production code")
       branch.push
@@ -77,24 +77,24 @@ class SfOpticon::Environment < ActiveRecord::Base
   end
 
   ##
-  # Deploys code changes to this environment. 
+  # Deploys code changes to this environment.
   #
   # @param sf_objects [String] The list of sf_objects to deploy.
   # @param destructive [Boolean] True if this is a destructive changeset
   def deploy(sf_objects, destructive = false)
     staging_dir = if destructive
-        stage_destructive(sf_objects)
-      else
-        stage_artifacts(sf_objects)
-      end
+      stage_destructive(sf_objects)
+    else
+      stage_artifacts(sf_objects)
+    end
     log.info { "Deploying artifacts staged in #{staging_dir} to #{name}"}
 
-     sforce.client.deploy(File.join(staging_dir,'src'), { :run_all_tests => false })
-        .on_complete { |job| log.info job.result }
-        .on_error {|job| log.error { "Error: #{job.result.inspect}" } }
-        .on_poll {|job| log.info "Polling..." }
-        .perform
-  end  
+    sforce.client.deploy(File.join(staging_dir,'src'), { :run_all_tests => false })
+    .on_complete { |job| log.info job.result }
+    .on_error {|job| log.error { "Error: #{job.result.inspect}" } }
+    .on_poll {|job| log.info "Polling..." }
+    .perform
+  end
 
   ##
   # Creates a destructive staging area.
@@ -173,7 +173,7 @@ class SfOpticon::Environment < ActiveRecord::Base
     ## Env has to have it's current sf_objects wiped out
     log.info { "Deleting all sfobjects for #{name}" }
     sf_objects.delete_all
-    
+
     SfOpticon::SfObject.transaction do
       sforce.gather_metadata.each do |o|
         sf_objects << SfOpticon::SfObject.create(o)
@@ -216,7 +216,7 @@ class SfOpticon::Environment < ActiveRecord::Base
       commit_message = "#{change[:type].to_s.capitalize} - #{change[:object][:full_name]}\n\n"
       if change[:type] == :delete
         commit_message += "#{change[:object][:file_name]} deleted"
-      else      
+      else
         change[:object].keys.each do |key|
           commit_message += "#{key.to_s.camelize}: #{change[:object][key]}\n"
         end
@@ -246,8 +246,8 @@ class SfOpticon::Environment < ActiveRecord::Base
         branch.add_changes
         branch.commit(commit_message, change[:object][:last_modified_by_name])
         sf_objects
-          .find_by_sfobject_id(change[:object][:sfobject_id])
-          .delete()
+        .find_by_sfobject_id(change[:object][:sfobject_id])
+        .delete()
 
       when :rename
         branch.rename_file(old_file, new_file)
@@ -256,10 +256,10 @@ class SfOpticon::Environment < ActiveRecord::Base
         end
 
         branch.add_changes
-        branch.commit(commit_message, change[:object][:last_modified_by_name])        
+        branch.commit(commit_message, change[:object][:last_modified_by_name])
         sf_objects
-          .find_by_sfobject_id(change[:old_object][:sfobject_id])
-          .clobber(change[:object])
+        .find_by_sfobject_id(change[:old_object][:sfobject_id])
+        .clobber(change[:object])
 
       when :add
         branch.add_file("#{dir}/#{new_file}", new_file)
@@ -268,7 +268,7 @@ class SfOpticon::Environment < ActiveRecord::Base
         end
 
         branch.add_changes
-        branch.commit(commit_message, change[:object][:last_modified_by_name])        
+        branch.commit(commit_message, change[:object][:last_modified_by_name])
         sf_objects << sf_objects.new(change[:object])
 
       when :modify
@@ -278,10 +278,10 @@ class SfOpticon::Environment < ActiveRecord::Base
         end
 
         branch.add_changes
-        branch.commit(commit_message, change[:object][:last_modified_by_name])        
+        branch.commit(commit_message, change[:object][:last_modified_by_name])
         sf_objects
-          .find_by_sfobject_id(change[:object][:sfobject_id])
-          .clobber(change[:object])
+        .find_by_sfobject_id(change[:object][:sfobject_id])
+        .clobber(change[:object])
 
       end
     end

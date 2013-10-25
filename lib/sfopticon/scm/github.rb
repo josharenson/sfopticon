@@ -3,7 +3,7 @@ require 'octokit'
 require 'date'
 
 # @note Please see {SfOpticon::Scm::Base} for documentation
-module SfOpticon::Scm::Github 
+module SfOpticon::Scm::Github
   include SfOpticon::Scm::Base
   attr_reader :git
 
@@ -23,13 +23,12 @@ module SfOpticon::Scm::Github
     SfOpticon::Logger.info { "Creating repository #{name}" }
 
     ##Octokit to create the repo on Github
-    octo = Octokit::Client.new :login => config.username,
-                               :password => config.password
+    octo = Octokit::Client.new :login => config.username, :password => config.password
 
     # If the remote repository already exists we need to bomb out
     if octo.repository? Octokit::Repository.from_url "#{config.url}/#{name}"
       raise SfOpticon::Scm::RepositoryFoundException.new(
-        "A repository by the name of #{name} already exists!")
+      "A repository by the name of #{name} already exists!")
     end
 
     # Create the remote repository, already init'd
@@ -77,14 +76,14 @@ module SfOpticon::Scm::Github
     curr_branch = git.current_branch
 
     @log.info { "Updating #{branch_name} branch with latest from remote" }
- 
+
     # First we have to make sure we have the remote branch info
     checkout('master')
     git.fetch
 
     checkout(branch_name)
     git.pull('origin', branch_name)
-    
+
     checkout(curr_branch)
     @log.info { 'Complete' }
   end
@@ -95,7 +94,7 @@ module SfOpticon::Scm::Github
   # It is from these branches that manifests will be generated and
   # deployed.
   #
-  # @param emv_name [String] The name of the environment that we'll 
+  # @param emv_name [String] The name of the environment that we'll
   #    be merging into this integration branch
   # @return [String] The name of the integration branch
   def make_integration_branch(env_name)
@@ -122,7 +121,7 @@ module SfOpticon::Scm::Github
 
   ##
   # Performs a merge from any branch to the current branch
-  # 
+  #
   # @param branch [String] The branch to merge in (optional)
   # @param message [String] The merge messager (optional)
   def merge(branch = 'master', message = nil)
@@ -136,7 +135,7 @@ module SfOpticon::Scm::Github
   # for integration branches, which are a throw-away and which we will be on
   # at the time. We need the other_env to look up additions in the sf_objects
   # so we have enough information for a manifest.
-  # 
+  #
   # @param other_env [SfOpticon::Environment] The environment we're merging in
   # @return changes [Hash] A hash with 2 keys, :added and :deleted, which are
   #    arrays of sf_objects
@@ -164,7 +163,7 @@ module SfOpticon::Scm::Github
     end
 
     changes
-  end  
+  end
 
   ##
   # Clones the repo_url into the local path and switches to the branch

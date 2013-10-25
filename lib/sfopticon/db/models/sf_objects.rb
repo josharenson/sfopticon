@@ -29,7 +29,6 @@ class SfOpticon::SfObject < ActiveRecord::Base
 
   ## Some helper methods
   ###
-
   def dirname
     File.dirname(file_name)
   end
