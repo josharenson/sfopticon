@@ -3,15 +3,17 @@ require 'extlib'
 # This class performs all of the duties related to the SFDC through
 # the Metaforce gem.
 class SfOpticon::Salesforce
+  attr_reader :env, :log, :config
 
   ##
   # @param env [SfOpticon::Environment]
   def initialize(env)
     @env = env
     @log = SfOpticon::Logger
+    @config = SfOpticon::Settings.salesforce
 
     Metaforce.configure do |c|
-      c.host = 'test.salesforce.com' unless @env.production
+      c.host = 'test.salesforce.com' unless (@env.production and not config.test)
       c.log = false
     end
   end
