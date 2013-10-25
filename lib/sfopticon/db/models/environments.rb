@@ -157,6 +157,11 @@ class SfOpticon::Environment < ActiveRecord::Base
     # statement deletion
     sf_objects.delete_all
 
+    # And we delete our remote branch
+    unless production
+      branch.delete_remote_branch
+    end
+
     # Discard the org contents.
     begin
       FileUtils.remove_dir("#{SfOpticon::Settings.scm.local_path}/#{name}")

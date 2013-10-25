@@ -120,6 +120,14 @@ module SfOpticon::Scm::Github
   end
 
   ##
+  # Deletes a remote branch
+  def delete_remote_branch
+    git.branch('master').checkout
+    git.branch(name).delete
+    git.push('origin',":#{name}")
+  end
+
+  ##
   # Performs a merge from any branch to the current branch
   #
   # @param branch [String] The branch to merge in (optional)
