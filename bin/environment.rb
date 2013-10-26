@@ -79,7 +79,9 @@ class EnvironmentCLI < Thor
       puts "NOTICE! This is your production environment. If you delete this all ",
            "environments will be deleted, and you'll need to delete your remote ",
            "repository manually."
-      env_list.unshift(SfOpticon::Environment.find_by_production(false)).flatten!
+      env_list = env_list.unshift(SfOpticon::Environment.find_by_production(false))
+          .flatten
+          .compact
     end
 
     print "Are you sure you want to delete #{env.name}? [yn]: "
