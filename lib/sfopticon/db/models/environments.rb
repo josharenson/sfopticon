@@ -13,7 +13,7 @@ class SfOpticon::Environment < ActiveRecord::Base
     :production,
     :locked
 
-  has_many :sf_objects, :dependent => :destroy
+  has_many :sf_objects
   has_one  :branch
 
   # Setup variables
