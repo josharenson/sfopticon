@@ -17,10 +17,13 @@ class SfOpticon::SfObject < ActiveRecord::Base
 
   def self.map_fields_from_sf(sfobject)
     sfcopy = sfobject.clone
-    sfcopy[:created_date] = Time.parse(sfcopy[:created_date]).utc
-    sfcopy[:last_modified_date] = Time.parse(sfcopy[:last_modified_date]).utc
-    sfcopy[:sfobject_id] = sfcopy[:id]
-    sfcopy[:object_type] = sfcopy[:type]
+
+    # Map all date stamps
+    sfobject.keys.select {|k| k.to_s.end_with? 'date'}.each do |key|
+      sfcopy[key] = Time.parse(sfobject[key]).utc
+    end
+    sfcopy[:sfobject_id] = sfobject[:id]
+    sfcopy[:object_type] = sfobject[:type]
     sfcopy.delete(:id)
     sfcopy.delete(:type)
 
