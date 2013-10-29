@@ -91,7 +91,7 @@ module SfOpticon::Scm::Github
   # It is from these branches that manifests will be generated and
   # deployed.
   #
-  # @param emv_name [String] The name of the environment that we'll
+  # @param env_name [String] The name of the environment that we'll
   #    be merging into this integration branch
   # @return [String] The name of the integration branch
   def make_integration_branch(env_name)
@@ -117,6 +117,14 @@ module SfOpticon::Scm::Github
   end
 
   ##
+  # Deletes a remote branch
+  def delete_remote_branch
+    git.branch('master').checkout
+    git.branch(name).delete
+    git.push('origin',":#{name}")
+  end
+
+  ##
   # Performs a merge from any branch to the current branch
   #
   # @param branch [String] The branch to merge in (optional)
@@ -134,7 +142,7 @@ module SfOpticon::Scm::Github
   # so we have enough information for a manifest.
   #
   # @param other_env [SfOpticon::Environment] The environment we're merging in
-  # @return changes [Hash] A hash with 2 keys, :added and :deleted, which are
+  # @return [Hash] A hash with 2 keys, :added and :deleted, which are
   #    arrays of sf_objects
   def calculate_changes_on_int(other_env)
     changes = { :added => [], :deleted => [] }

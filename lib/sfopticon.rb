@@ -3,15 +3,15 @@ class SfOpticon
   require 'rubygems'
   require 'bundler/setup'
 
-  ## Vendor
+  # Vendor
   require 'active_record'
   require 'active_support/core_ext/hash'
   require 'protected_attributes'
   require 'deep_symbolize'
 
-  ## Settings needs to be required before any project local libs
+  # Settings needs to be required before any project local libs
   require 'sfopticon/settings'
-  ## There, now go ahead
+  # There, now go ahead
 
   require 'sfopticon/scm'
   require 'sfopticon/scm/base'

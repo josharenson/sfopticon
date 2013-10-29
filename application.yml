@@ -42,7 +42,9 @@ logging:
   shift_size: 1048576
   datetime_format:
 
+# Set "test" to true, to allow logging into test.salesforce.com for your "production" env
 salesforce:
+  test: false
   metadata_types:
     - ApexClass
     - ApexComponent

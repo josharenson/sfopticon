@@ -1,4 +1,4 @@
-#!/usr/bin/ruby
+#!/usr/bin/env ruby
 
 unless ENV.has_key? 'SFOPTICON_HOME' and Dir.exist? ENV['SFOPTICON_HOME']
   ENV['SFOPTICON_HOME'] = File.join(File.dirname(__FILE__), '..')
@@ -19,7 +19,7 @@ class IntegrationCLI < Thor
 
   desc "merge", "Merge and deploy changes from one environment to another."
   option :source, :type => :string, :required => true
-  option :destination, :type => :string, :require => true
+  option :destination, :type => :string, :required => true
   def merge
     integrate(options[:source], options[:destination])
   end

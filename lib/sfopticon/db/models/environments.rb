@@ -13,7 +13,7 @@ class SfOpticon::Environment < ActiveRecord::Base
     :production,
     :locked
 
-  has_many :sf_objects, :dependent => :destroy
+  has_many :sf_objects
   has_one  :branch
 
   # Setup variables
@@ -156,6 +156,11 @@ class SfOpticon::Environment < ActiveRecord::Base
     # We skip the instantiation and go straight to single
     # statement deletion
     sf_objects.delete_all
+
+    # And we delete our remote branch
+    unless production
+      branch.delete_remote_branch
+    end
 
     # Discard the org contents.
     begin

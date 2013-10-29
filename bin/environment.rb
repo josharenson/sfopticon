@@ -1,4 +1,4 @@
-#!/usr/bin/ruby
+#!/usr/bin/env ruby
 
 require 'thor'
 require 'io/console'
@@ -72,14 +72,28 @@ class EnvironmentCLI < Thor
       puts "Environment \"#{options[:org]}\" not found."
       exit
     end
+    env_list = [env]
 
     puts "Warning! This operation is irreversible!"
-    printf "Are you sure you want to delete #{env.name}? [yn]: "
+    if env.production
+      puts "NOTICE! This is your production environment. If you delete this all ",
+           "environments will be deleted, and you'll need to delete your remote ",
+           "repository manually."
+      env_list = env_list.unshift(SfOpticon::Environment.find_by_production(false))
+          .flatten
+          .compact
+    end
+
+    print "Are you sure you want to delete #{env.name}? [yn]: "
     answer = STDIN.getc
 
     if answer.downcase == "y"
-      puts "Deleting all records from #{options[:org]}"
-      env.remove
+      env_list.each do |se|
+        puts "Deleting #{se.name}... "
+        puts ""
+        se.remove
+        puts ""
+      end
     elsif answer.downcase == "n"
       puts "Skipping."
     else
@@ -142,11 +156,6 @@ class EnvironmentCLI < Thor
     if not opts_copy[:password]
       print "Salesforce Password: "
       opts_copy[:password] = STDIN.noecho(&:gets).chomp
-    end
-
-    if not opts_copy[:securitytoken]
-      print "\nSalseforce security token (optional): "
-      opts_copy[:securitytoken] = $stdin.gets.chomp
     end
 
     begin

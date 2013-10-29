@@ -10,6 +10,7 @@ require 'date'
 require 'extlib'
 require 'fileutils'
 require 'active_record_migrations'
+require 'yard'
 
 ActiveRecordMigrations.configure do |c|
 	c.yaml_config = 'application.yml'
@@ -18,29 +19,35 @@ ActiveRecordMigrations.configure do |c|
 end
 ActiveRecordMigrations.load_tasks
 
-task :configuration do
-	@db_config = SfOpticon::Settings.database
+YARD::Rake::YardocTask.new do |t|
+  t.files   = ['lib/**/*.rb']
+  t.options = ['--quiet']
 end
 
-task :connect_to_db => :configuration do
-	ActiveRecord::Base.establish_connection @db_config
+task :db_configuration do
+  @db_config = SfOpticon::Settings.database
 end
 
-task :create_db => :configuration do
-	db_name = @db_config.database
-	tmp_config = @db_config.dup
-	tmp_config.delete 'database'
+task :connect_to_db => :db_configuration do
+  ActiveRecord::Base.establish_connection @db_config
+end
 
-	ActiveRecord::Base.establish_connection tmp_config
-	puts "Dropping database #{db_name}"
-	begin
-		ActiveRecord::Base.connection.drop_database db_name
-	rescue => e
-	end
+task :create_db => :db_configuration do
+  db_name = @db_config.database
+  tmp_config = @db_config.dup
+  tmp_config.delete 'database'
 
-	puts "Creating database #{db_name}"
-	ActiveRecord::Base.connection.create_database db_name
-	puts "Database #{@db_config.database} created."
+  ActiveRecord::Base.establish_connection tmp_config
+  puts "Dropping database #{db_name}"
+  ActiveRecord::Base.connection.drop_database db_name rescue nil
+
+  puts "Creating database #{db_name}"
+  ActiveRecord::Base.connection.create_database db_name
+  puts "Database #{@db_config.database} created."
 end
 
 task :setup_db => [:create_db, 'db:schema:load']
+
+task :doc => :yard do
+  puts "Documentation generated and placed in ./doc. You can run a local server by executing 'yard server'"
+end
