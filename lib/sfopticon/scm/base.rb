@@ -56,9 +56,69 @@ module SfOpticon::Scm::Base
   end
 
   ##
+  # Switch to an existing branch
+  #
+  # @param branch [String] The name of the branch to switch to
+  def checkout(branch)
+    raise NotImplementedError
+  end
+
+  ##
+  # Add a tag
+  #
+  # @param text [String] The tag text
+  def add_tag(text)
+    raise NotImplementedError
+  end
+
+  ##
+  # Creates a branch locally and pushes it to remote
+  def make_branch
+    raise NotImplementedError
+  end
+
+  ##
+  # Switches to, and updates from remote, a given branch
+  #
+  # @param branch [String] The name of the branch to update
+  def update_branch(branch)
+    raise NotImplementedError
+  end
+
+  ##
   # Calculates the changes on our integration branch.
   #
   def calculate_changes_on_int
+    raise NotImplementedError
+  end
+
+  ##
+  # Creates an integration branch. These will be a branch of *this*
+  # branch and will be a destination for merging from some other branch.
+  # It is from these branches that manifests will be generated and
+  # deployed.
+  #
+  # @param env_name [String] The name of the environment that we'll
+  #    be merging into this integration branch
+  # @return [String] The name of the integration branch
+  def make_integration_branch(env_name)
+    raise NotImplementedError
+  end
+
+  ##
+  # Deletes an integration branch.
+  #
+  # @param ib_name [String] The name of the integration branch
+  def delete_integration_branch(ib_name)
+    raise NotImplementedError
+  end
+
+  ##
+  # Merge another branch into the current branch.
+  #
+  # @param branch [String] Branch name
+  # @param message [String] Optional message for the commit
+  def merge(branch = nil, message = nil)
     raise NotImplementedError
   end
 
