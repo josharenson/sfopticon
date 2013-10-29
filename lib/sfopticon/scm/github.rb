@@ -62,9 +62,6 @@ module SfOpticon::Scm::Github
   def make_branch
     @log.info { "Creating branch #{name}" }
     clone
-    #File.open(File.join(local_path, 'README.md'), 'w') do |f|
-    #  f.puts("Initializing branch #{name} at #{DateTime.now}")
-    #end
     add_changes
     commit("Branch initialization")
     push
