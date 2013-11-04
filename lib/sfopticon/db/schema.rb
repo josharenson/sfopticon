@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20131103235410) do
+ActiveRecord::Schema.define(version: 20131104052345) do
 
   create_table "branches", force: true do |t|
     t.string   "name"
@@ -21,7 +21,7 @@ ActiveRecord::Schema.define(version: 20131103235410) do
   end
 
   create_table "environments", force: true do |t|
-    t.string   "name",                                          null: false
+    t.string   "name",          null: false
     t.string   "username"
     t.string   "password"
     t.string   "securitytoken"
@@ -29,13 +29,15 @@ ActiveRecord::Schema.define(version: 20131103235410) do
     t.datetime "created_at"
     t.datetime "updated_at"
     t.boolean  "locked"
-    t.string   "host", :default => 'test.salesforce.com'
+    t.string   "host"
   end
 
   create_table "integration_branches", force: true do |t|
-    t.string   "name",           null: false
-    t.integer  "branch_id"
-    t.integer  "dest_branch_id", null: false
+    t.string   "name",                        null: false
+    t.integer  "source_env",                  null: false
+    t.integer  "dest_env",                    null: false
+    t.string   "commit_id"
+    t.boolean  "is_deployed", default: false
     t.datetime "created_at"
     t.datetime "updated_at"
   end
