@@ -195,7 +195,7 @@ class SfOpticon::Environment < ActiveRecord::Base
   # Returns the changeset
   def changeset
     curr_snap = sforce.gather_metadata
-    diff = SfOpticon::ChangeMonitor::Diff.diff(sf_objects, curr_snap)
+    diff = SfOpticon::ChangeMonitor::Diff.snap_diff(sf_objects, curr_snap)
     if diff.size == 0
       log.info { "No changes detected in #{name}" }
       return
