@@ -42,9 +42,9 @@ class SfOpticon::ChangeMonitor
         n_file_name = new_snap_ids[key][:file_name]
 
         if o_last_m != n_last_m
-          @log.info { "#{orig_snap_ids[key][:full_name]} has been modified"
+          @log.info { "#{orig_snap_ids[key][:full_name]} has been modified" }
           if o_full_name != n_full_name || o_file_name != n_file_name
-            @log.info { "#{orig_snap_ids[key]} has been renamed to #{new_snap_ids[key][:full_name]}"
+            @log.info { "#{orig_snap_ids[key]} has been renamed to #{new_snap_ids[key][:full_name]}" }
             changes.push({ :old_object => orig_snap_ids[key],
                            :type => :rename,
                            :object => new_snap_ids[key] })
