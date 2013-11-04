@@ -13,7 +13,7 @@ class SfOpticon::Salesforce
     @config = SfOpticon::Settings.salesforce
 
     Metaforce.configure do |c|
-      c.host = 'test.salesforce.com' unless (@env.production and not config.test)
+      c.host = @env.host
       c.log = false
     end
   end

@@ -7,6 +7,7 @@ class SfOpticon::Environment < ActiveRecord::Base
   validates_uniqueness_of :name,
     :message => "This organization is already configured."
   attr_accessible :name,
+    :host,
     :username,
     :password,
     :securitytoken,
@@ -20,7 +21,7 @@ class SfOpticon::Environment < ActiveRecord::Base
   after_initialize do |env|
     @log = SfOpticon::Logger
     @config = SfOpticon::Settings.salesforce
-    @sforce = SfOpticon::Salesforce.new(self)
+    @sforce = SfOpticon::Salesforce.new(env)
   end
 
   ##

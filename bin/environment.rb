@@ -121,6 +121,7 @@ class EnvironmentCLI < Thor
   end
 
   option :name, :type => :string, :required => true
+  option :host, :type => :string, :required => false, :default => 'test.salesforce.com'
   option :username, :type => :string, :required => false
   option :password, :type => :string, :required => false
   option :securitytoken, :type => :string, :required => false
