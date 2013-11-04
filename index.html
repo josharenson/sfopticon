@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset='utf-8' />
+    <meta http-equiv="X-UA-Compatible" content="chrome=1" />
+    <meta name="description" content="SfOpticon : In your Salesforce controlling your versions" />
+
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+
+    <title>SfOpticon</title>
+  </head>
+
+  <body>
+
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/sfopticon/sfopticon">View on GitHub</a>
+
+          <h1 id="project_title">SfOpticon</h1>
+          <h2 id="project_tagline">In your Salesforce controlling your versions</h2>
+
+            <section id="downloads">
+              <a class="zip_download_link" href="https://github.com/sfopticon/sfopticon/zipball/master">Download this project as a .zip file</a>
+              <a class="tar_download_link" href="https://github.com/sfopticon/sfopticon/tarball/master">Download this project as a tar.gz file</a>
+            </section>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+        <p>SfOpticon is a tool to add software conifguration managment capabilities to the Salesforce development cycle. </p>
+
+<h3>
+<a name="getting-sfopticon" class="anchor" href="#getting-sfopticon"><span class="octicon octicon-link"></span></a>Getting SfOpticon</h3>
+
+<p>The source for SfOpticon can be downloaded on this website as a zip archive, or a gzipped tarball. However, if you would always like to be up to date, it is recommended that you clone the git repository. </p>
+
+<pre><code>$ git clone https://github.com/sfopticon/sfopticon.git
+</code></pre>
+
+<p>For more information, or for even more download methods, please visit <a href="https://github.com/sfopticon/sfopticon">https://github.com/sfopticon/sfopticon</a></p>
+
+<h3>
+<a name="configuration" class="anchor" href="#configuration"><span class="octicon octicon-link"></span></a>Configuration</h3>
+
+<p>Configuration details are stored in the 'application.yml' file. Please fill out your database and scm details here. Currently, MySQL and Github are the only supported configurations.</p>
+
+<h3>
+<a name="installation" class="anchor" href="#installation"><span class="octicon octicon-link"></span></a>Installation</h3>
+
+<p>Installation is simple and requires <a href="https://www.ruby-lang.org/">ruby</a> and <a href="http://bundler.io/">bundler</a> </p>
+
+<pre><code>$ cd sfopticon/
+$ bundle install
+</code></pre>
+
+<p>If installation fails, it is most likely due to missing database drivers. Please see the troubleshooting section for more details.</p>
+
+<h3>
+<a name="usage" class="anchor" href="#usage"><span class="octicon octicon-link"></span></a>Usage</h3>
+
+<p>First, a production environment must be setup.</p>
+
+<pre><code>$ ./bin/ennironment.rb create --name &lt;YOUR_PROD_ENV_NAME&gt; --production
+</code></pre>
+
+<p>After you have created your production environment, feel free to create other non-production environments as you see fit.</p>
+
+<p>The next step is to create a changeset using the scanner tool. You can do this manually, but it is recommended to create a relatively frequent (~20 - 30 minutes) cron job for this. As its name implies, the scanner tool scans your environment for changes and synchronizes them with the remote SCM system.</p>
+
+<pre><code>$ ./bin/scanner.rb changeset --org &lt;ENVIRONMENT_TO_SCAN&gt;
+</code></pre>
+
+<p>Lastly, the integration tool allows you to integrate branches, and then deploy the merged changes to any environment.</p>
+
+<pre><code>$ ./bin/integrate.rb merge --soruce &lt;SOURCE_ENV&gt; --destination &lt;DEST_ENV&gt;
+</code></pre>
+
+<p>This will perform the merge and stash your changes in a temporary branch, allowing you to deploy at your leisure. </p>
+
+<p>// TO-DO INSERT DEPLOY DOCUMENTATION HERE WHEN THE FEATURE IS DONE</p>
+
+<h3>
+<a name="troubleshooting" class="anchor" href="#troubleshooting"><span class="octicon octicon-link"></span></a>Troubleshooting</h3>
+
+<p>// TO-DO Get all deb or rpm or osx or windows dependenceis outside of the normal ruby things</p>
+
+<h3>
+<a name="authors-and-contributors" class="anchor" href="#authors-and-contributors"><span class="octicon octicon-link"></span></a>Authors and Contributors</h3>
+
+<p>Ryan Parr - <a href="https://github.com/ryanparr" class="user-mention">@ryanparr</a> 
+Josh Arenson - <a href="https://github.com/josharenson" class="user-mention">@josharenson</a></p>
+      </section>
+    </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">SfOpticon maintained by <a href="https://github.com/sfopticon">sfopticon</a></p>
+        <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
+      </footer>
+    </div>
+
+    
+
+  </body>
+</html>
