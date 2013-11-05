@@ -38,8 +38,8 @@
 
 <p>The source for SfOpticon can be downloaded on this website as a zip archive, or a gzipped tarball. However, if you would always like to be up to date, it is recommended that you clone the git repository. </p>
 
-<pre><code>$ git clone https://github.com/sfopticon/sfopticon.git
-</code></pre>
+<div class="highlight highlight-console"><pre><span class="gp">$</span> git clone https://github.com/sfopticon/sfopticon.git
+</pre></div>
 
 <p>For more information, or for even more download methods, please visit <a href="https://github.com/sfopticon/sfopticon">https://github.com/sfopticon/sfopticon</a></p>
 
@@ -51,11 +51,11 @@
 <h3>
 <a name="installation" class="anchor" href="#installation"><span class="octicon octicon-link"></span></a>Installation</h3>
 
-<p>Installation is simple and requires <a href="https://www.ruby-lang.org/">ruby</a> and <a href="http://bundler.io/">bundler</a> </p>
+<p>Installation is simple given a sane build environment, and requires <a href="https://www.ruby-lang.org/">ruby</a> and <a href="http://bundler.io/">bundler</a> </p>
 
-<pre><code>$ cd sfopticon/
-$ bundle install
-</code></pre>
+<div class="highlight highlight-console"><pre><span class="gp">$</span> <span class="nb">cd </span>sfopticon/
+<span class="gp">$</span> bundle install
+</pre></div>
 
 <p>If installation fails, it is most likely due to missing database drivers. Please see the troubleshooting section for more details.</p>
 
@@ -64,38 +64,113 @@ $ bundle install
 
 <p>First, a production environment must be setup.</p>
 
-<pre><code>$ ./bin/ennironment.rb create --name &lt;YOUR_PROD_ENV_NAME&gt; --production
-</code></pre>
+<div class="highlight highlight-console"><pre><span class="gp">$</span> ./bin/environment.rb create --name &lt;YOUR_PROD_ENV_NAME&gt; --production
+</pre></div>
 
 <p>After you have created your production environment, feel free to create other non-production environments as you see fit.</p>
 
 <p>The next step is to create a changeset using the scanner tool. You can do this manually, but it is recommended to create a relatively frequent (~20 - 30 minutes) cron job for this. As its name implies, the scanner tool scans your environment for changes and synchronizes them with the remote SCM system.</p>
 
-<pre><code>$ ./bin/scanner.rb changeset --org &lt;ENVIRONMENT_TO_SCAN&gt;
-</code></pre>
+<div class="highlight highlight-console"><pre><span class="gp">$</span> ./bin/scanner.rb changeset --org &lt;ENVIRONMENT_TO_SCAN&gt;
+</pre></div>
 
 <p>Lastly, the integration tool allows you to integrate branches, and then deploy the merged changes to any environment.</p>
 
-<pre><code>$ ./bin/integrate.rb merge --soruce &lt;SOURCE_ENV&gt; --destination &lt;DEST_ENV&gt;
-</code></pre>
+<div class="highlight highlight-console"><pre><span class="gp">$</span> ./bin/integrate.rb merge --soruce &lt;SOURCE_ENV&gt; --destination &lt;DEST_ENV&gt;
+</pre></div>
 
 <p>This will perform the merge and stash your changes in a temporary branch, allowing you to deploy at your leisure. </p>
 
-<p>// TO-DO INSERT DEPLOY DOCUMENTATION HERE WHEN THE FEATURE IS DONE</p>
+<h3>
+<a name="a-common-workflow" class="anchor" href="#a-common-workflow"><span class="octicon octicon-link"></span></a>A Common Workflow</h3>
+
+<p>The workflow we use, and what we expect to be a common workflow out in the wild, is a 
+production environment with full sandboxes for feature development and hotfixes where the hotfix sandbox is kept in sync with production, and the sandboxes are updated with any interim deploys to production for hotfix or separate feature release.</p>
+
+<p>Let's walk through using SfOpticon to manage this scenario.</p>
+
+<p>First setup your environments. You must create your production environment first. You can specify --username and --password on the command line, or leave them out and allow the script to query you. Additionally, you can add --securitytoken.</p>
+
+<div class="highlight highlight-console"><pre><span class="gp">$</span> ./bin/environment.rb create --name Prod --host login.salesforce.com --production
+<span class="gp">$</span> ./bin/environment.rb create --name Hotfix --host test.salesforce.com
+<span class="gp">$</span> ./bin/environment.rb create --name Sandbox1 --host test.salesforce.com
+</pre></div>
+
+<h3>
+<a name="change-monitoring" class="anchor" href="#change-monitoring"><span class="octicon octicon-link"></span></a>Change Monitoring</h3>
+
+<p>You'll want to setup the changeset scanner to execute every 20 minutes or so. This is 
+the piece that watches your Salesforce orgs, detects changes, and adds those changes 
+to the underlying VCS.</p>
+
+<p>Add a line to cron for each environment.</p>
+
+<pre lang="cron"><code>    */20 * * * bin/scanner.rb changeset --org Prod
+    */20 * * * bin/scanner.rb changeset --org Hotfix
+    */20 * * * bin/scanner.rb changeset --org Sandbox1
+</code></pre>
+
+<p>Note that this is the reverse of the common solution. Rather than committing our changes to the VCS and then deploying them to the org, simply go about your development as you normally do and allow the tools to manage the VCS integration. This has the benefit of allowing us to track declarative and configuration changes.</p>
+
+<p>Now, you've been running SfOpticon for the past week as your developers have been working on a new feature. The production org shouldn't have had any changes since all changes are happening in a sandbox.</p>
+
+<h3>
+<a name="deployment" class="anchor" href="#deployment"><span class="octicon octicon-link"></span></a>Deployment</h3>
+
+<p>Now imagine that a SEV1 issue has just come in and you need to get this deployed to production right away. Hack away on the hotfix environment until you're ready for deploy.</p>
+
+<p>Execute:</p>
+
+<div class="highlight highlight-console"><pre><span class="gp">$</span> ./bin/integrate.rb merge --source Hotfix --destination Production
+</pre></div>
+
+<p>This command will create a temporary integration branch from the Production branch, merge in the changes to Hotfix, generate destructive and productive manifests from the branch diffs, and deploy your changes to production.</p>
+
+<p>Pretty cool, yeah?</p>
+
+<p>But wait. Now Sandbox1 is out of sync with production. What's more, maybe the SEV1 you just pushed has overlapping code with your feature on the sandbox.</p>
+
+<h3>
+<a name="rebasing" class="anchor" href="#rebasing"><span class="octicon octicon-link"></span></a>Rebasing</h3>
+
+<p>It's time to rebase!</p>
+
+<p>Rebasing will take any changes in the production environment and merge them into the sub-environment using the VCS merging tools. </p>
+
+<div class="highlight highlight-console"><pre><span class="gp">$</span> ./bin/integrate.rb rebase --org Sandbox1
+</pre></div>
+
+<p>Voila! Not only do you have the changes in production, but if there was code overlap it's properly merged!</p>
+
+<p>Alternatively you could've executed the merge using the hotfix and sandbox names for the merge arguments. This is useful to move code around for integration testing, UAT, etc.</p>
+
+<div class="highlight highlight-console"><pre><span class="gp">$</span> ./bin/integrate.rb merge --source Hotfix --destination Sandbox1
+</pre></div>
+
+<p>If there are merge conflicts you'll be notified and the script will exit. </p>
+
+<h3>
+<a name="cherry-picking" class="anchor" href="#cherry-picking"><span class="octicon octicon-link"></span></a>Cherry Picking</h3>
+
+<p>Say you would like to choose which changes on Sandbox1 you'd like to deploy to Production. We understand. We want that feature too, and it's on the roadmap. However it doesn't exist today. Today you'll need to actually undo those changes in the source environment and allow the scanner to apply the changeset to the VCS prior to deployment.</p>
 
 <h3>
 <a name="troubleshooting" class="anchor" href="#troubleshooting"><span class="octicon octicon-link"></span></a>Troubleshooting</h3>
 
-<p>// TO-DO Get all deb or rpm or osx or windows dependenceis outside of the normal ruby things</p>
+<p>// TO-DO Get all deb or rpm or osx or windows dependencies outside of the normal ruby things</p>
 
 <h3>
 <a name="authors-and-contributors" class="anchor" href="#authors-and-contributors"><span class="octicon octicon-link"></span></a>Authors and Contributors</h3>
 
-<p>Ryan Parr - <a href="https://github.com/ryanparr" class="user-mention">@ryanparr</a><br /> 
-Josh Arenson - <a href="https://github.com/josharenson" class="user-mention">@josharenson</a><br />
-Matthew Roark - <a href="https://github.com/matthew-roark" class="user-mention">@matthew-roark</a><br />
-Deb Weller
-</p>
+<ul>
+<li>Ryan Parr - <a href="https://github.com/ryanparr" class="user-mention">@ryanparr</a> </li>
+<li>Josh Arenson - <a href="https://github.com/josharenson" class="user-mention">@josharenson</a>
+</li>
+<li>Matthew Roark - <a href="https://github.com/matthew-roark" class="user-mention">@matthew-roark</a>
+</li>
+<li>Deb Weller - <a href="https://github.com/debdub" class="user-mention">@debdub</a>
+</li>
+</ul>
       </section>
     </div>
 
