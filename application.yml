@@ -16,7 +16,7 @@ database:
 
 scm:
   adapter: github
-  url: https://github.com/ryanparr
+  url: https://github.com/
   username: 
   password: 
   local_path: orgs
@@ -50,4 +50,3 @@ salesforce:
     - ApexComponent
     - ApexPage
     - ApexTrigger
-    - CustomObject
