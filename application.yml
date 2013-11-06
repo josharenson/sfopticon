@@ -31,10 +31,6 @@ scm:
     team_id:
     gitignore_template:
 
-test:
-  username: 
-  password: 
-
 logging:
   logdev: STDERR
   level: DEBUG
@@ -44,7 +40,6 @@ logging:
 
 # Set "test" to true, to allow logging into test.salesforce.com for your "production" env
 salesforce:
-  test: false
   metadata_types:
     - ApexClass
     - ApexComponent
