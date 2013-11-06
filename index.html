@@ -61,6 +61,8 @@
 
 <p>If installation fails, please make sure that you have a sane build environment with all required development libraries for compiling native Ruby library extensions.</p>
 
+<p>The most common cause for installation failure is compiling the extensions for <a href="http://nokogiri.org">Nokogiri</a> and MySQL. For Nokogiri you'll need to be sure you have libxml2-dev and libxslt-dev development libraries installed on your system. For MySQL make sure you have the client development libraries.</p>
+
 <p>After the bundle install is successful, execute:</p>
 
 <div class="highlight highlight-console"><pre><span class="gp">$</span> rake setup_db
