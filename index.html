@@ -48,16 +48,23 @@
 
 <p>Configuration details are stored in the 'application.yml' file. Please fill out your database and scm details here. Currently, MySQL and Github are the only supported configurations.</p>
 
+<p>Note that the database section follows all configuration details of the ActiveRecord configuration.</p>
+
 <h3>
 <a name="installation" class="anchor" href="#installation"><span class="octicon octicon-link"></span></a>Installation</h3>
 
-<p>Installation is simple given a sane build environment, and requires <a href="https://www.ruby-lang.org/">ruby</a> and <a href="http://bundler.io/">bundler</a> </p>
+<p>Installation is simple given a sane build environment, and requires <a href="https://www.ruby-lang.org/">ruby</a>, <a href="http://bundler.io/">bundler</a>, a configured database, and a GitHub account. </p>
 
 <div class="highlight highlight-console"><pre><span class="gp">$</span> <span class="nb">cd </span>sfopticon/
 <span class="gp">$</span> bundle install
 </pre></div>
 
-<p>If installation fails, it is most likely due to missing database drivers. Please see the troubleshooting section for more details.</p>
+<p>If installation fails, please make sure that you have a sane build environment with all required development libraries for compiling native Ruby library extensions.</p>
+
+<p>After the bundle install is successful, execute:</p>
+
+<div class="highlight highlight-console"><pre><span class="gp">$</span> rake setup_db
+</pre></div>
 
 <h3>
 <a name="usage" class="anchor" href="#usage"><span class="octicon octicon-link"></span></a>Usage</h3>
@@ -74,15 +81,20 @@
 <div class="highlight highlight-console"><pre><span class="gp">$</span> ./bin/scanner.rb changeset --org &lt;ENVIRONMENT_TO_SCAN&gt;
 </pre></div>
 
-<p>Lastly, the integration tool allows you to integrate branches, and then deploy the merged changes to any environment.</p>
+<p>For sub-environments you'll want to rebase frequently. This brings changes down from the configured production environment and merges them into the sub-environment. Making sure to perform this step regularly will drastically reduce risk of merge conflicts.</p>
 
-<div class="highlight highlight-console"><pre><span class="gp">$</span> ./bin/integrate.rb merge --soruce &lt;SOURCE_ENV&gt; --destination &lt;DEST_ENV&gt;
+<div class="highlight highlight-console"><pre><span class="gp">$</span> ./bin/integrate.rb rebase --org &lt;ENVIRONMENT_TO_REBASE&gt;
 </pre></div>
 
-<p>This will perform the merge and stash your changes in a temporary branch, allowing you to deploy at your leisure. </p>
+<p>Lastly, the integration tool allows you to integrate branches, and then deploy the merged changes to any environment.</p>
 
-<h3>
-<a name="a-common-workflow" class="anchor" href="#a-common-workflow"><span class="octicon octicon-link"></span></a>A Common Workflow</h3>
+<div class="highlight highlight-console"><pre><span class="gp">$</span> ./bin/integrate.rb merge --source &lt;SOURCE_ENV&gt; --destination &lt;DEST_ENV&gt;
+</pre></div>
+
+<p>This will create an integration branch, perform a merge, and if the merge is successful the changes will be deployed to the destination environment.</p>
+
+<h2>
+<a name="example-of-a-common-workflow" class="anchor" href="#example-of-a-common-workflow"><span class="octicon octicon-link"></span></a>Example of a Common Workflow</h2>
 
 <p>The workflow we use, and what we expect to be a common workflow out in the wild, is a 
 production environment with full sandboxes for feature development and hotfixes where the hotfix sandbox is kept in sync with production, and the sandboxes are updated with any interim deploys to production for hotfix or separate feature release.</p>
