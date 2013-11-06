@@ -78,7 +78,7 @@
 
 <p>After you have created your production environment, feel free to create other non-production environments as you see fit.</p>
 
-<p>The next step is to create a changeset using the scanner tool. You can do this manually, but it is recommended to create a relatively frequent (~20 - 30 minutes) cron job for this. As its name implies, the scanner tool scans your environment for changes and synchronizes them with the remote SCM system.</p>
+<p>To retrieve changes to your configured org you'll use the changeset subcommand of the scanner tool. You can do this manually, but it is recommended to create a relatively frequent (~20 - 30 minutes) cron job for this. As its name implies, the scanner tool scans your environment for changes and synchronizes them with the remote SCM system.</p>
 
 <div class="highlight highlight-console"><pre><span class="gp">$</span> ./bin/scanner.rb changeset --org &lt;ENVIRONMENT_TO_SCAN&gt;
 </pre></div>
@@ -127,7 +127,7 @@ to the underlying VCS.</p>
     */20 * * * bin/scanner.rb changeset --org Sandbox1
 </code></pre>
 
-<p>Note that this is the reverse of the common solution. Rather than committing our changes to the VCS and then deploying them to the org, simply go about your development as you normally do and allow the tools to manage the VCS integration. This has the benefit of allowing us to track declarative and configuration changes.</p>
+<p>Note that this is the reverse of the common solution. Rather than committing your changes to the VCS and then deploying them to the org, simply go about your development as you normally do and allow the tools to manage the VCS integration. This has the benefit of allowing the tool to track declarative and configuration changes.</p>
 
 <p>Now, you've been running SfOpticon for the past week as your developers have been working on a new feature. The production org shouldn't have had any changes since all changes are happening in a sandbox.</p>
 
