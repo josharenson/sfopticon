@@ -57,15 +57,17 @@ task :delete_repo do
   repo_name = ENV['repo_name']
 
   unless repo_name
-    abort "repo_name required."
+    repo_name = SfOpticon::Environment.find_by_production(true).name
   end
 
   config = SfOpticon::Settings.scm
   octo = Octokit::Client.new :login => config.username, :password => config.password
   repo = Octokit::Repository.from_url "#{config.url}/#{repo_name}"
   if octo.delete_repo(repo)
-    puts "Repository deleted."
+    puts "Repository #{repo} deleted."
   else
-    abort "An unknown issue occurred."
+    puts "An unknown issue occurred. Repo #{repo} not deleted."
   end
 end
+
+task :reset => [:delete_repo, :setup_db]
