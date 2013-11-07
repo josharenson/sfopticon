@@ -36,12 +36,12 @@
 <h3>
 <a name="getting-sfopticon" class="anchor" href="#getting-sfopticon"><span class="octicon octicon-link"></span></a>Getting SfOpticon</h3>
 
-<p>The source for SfOpticon can be downloaded on this website as a zip archive, or a gzipped tarball. SfOpticon is in active development, and is still in Alpha status. If you would like to stay connected and ensure you always have the latest version it is recommended that you clone the git repository and follow us on Github.</p>
+<p>The source for SfOpticon can be downloaded on this website as a zip archive or as a gzipped tarball. SfOpticon is in active development, and is still in Alpha status. If you would like to stay connected and ensure you always have the latest version it is recommended that you clone the git repository and follow us on Github.</p>
 
 <div class="highlight highlight-console"><pre><span class="gp">$</span> git clone https://github.com/sfopticon/sfopticon.git
 </pre></div>
 
-<p>For more information, or for even more download methods, please visit <a href="https://github.com/sfopticon/sfopticon">https://github.com/sfopticon/sfopticon</a></p>
+<p>Visit <a href="http://github.com/sfopticon/sfopticon">http://github.com/sfopticon/sfopticon</a> for the project page.</p>
 
 <h3>
 <a name="configuration" class="anchor" href="#configuration"><span class="octicon octicon-link"></span></a>Configuration</h3>
@@ -55,13 +55,13 @@
 
 <p>Please note that while the tools and libraries may install on a Windows system we have not tested this and do not support it at this time.</p>
 
-<p>Installation is simple given a sane build environment, and requires <a href="https://www.ruby-lang.org/">ruby</a>, <a href="http://bundler.io/">bundler</a>, a configured database, and a GitHub account. </p>
+<p>Installation is simple given a sane build environment. It requires <a href="https://www.ruby-lang.org/">ruby</a>, <a href="http://bundler.io/">bundler</a>, a configured database, and a GitHub account. </p>
 
 <div class="highlight highlight-console"><pre><span class="gp">$</span> <span class="nb">cd </span>sfopticon/
 <span class="gp">$</span> bundle install
 </pre></div>
 
-<p>If installation fails, please make sure that you have a sane build environment with all required development libraries for compiling native Ruby library extensions.</p>
+<p>If installation fails verify that you have a sane build environment with all required development libraries for compiling native Ruby library extensions.</p>
 
 <p>The most common cause for installation failure is compiling the extensions for <a href="http://nokogiri.org">Nokogiri</a> and MySQL. For Nokogiri you'll need to be sure you have libxml2-dev and libxslt-dev development libraries installed on your system. For MySQL make sure you have the client development libraries.</p>
 
@@ -85,7 +85,7 @@
 <div class="highlight highlight-console"><pre><span class="gp">$</span> ./bin/scanner.rb changeset --org &lt;ENVIRONMENT_TO_SCAN&gt;
 </pre></div>
 
-<p>For sub-environments you'll want to rebase frequently. This brings changes down from the configured production environment and merges them into the sub-environment. Making sure to perform this step regularly will drastically reduce risk of merge conflicts.</p>
+<p>For sub-environments you'll want to rebase frequently. This brings changes down from the configured production environment and merges them into the sub-environment. Performing this step regularly will  reduce risk of merge conflicts.</p>
 
 <div class="highlight highlight-console"><pre><span class="gp">$</span> ./bin/integrate.rb rebase --org &lt;ENVIRONMENT_TO_REBASE&gt;
 </pre></div>
@@ -95,13 +95,13 @@
 <div class="highlight highlight-console"><pre><span class="gp">$</span> ./bin/integrate.rb merge --source &lt;SOURCE_ENV&gt; --destination &lt;DEST_ENV&gt;
 </pre></div>
 
-<p>This will create an integration branch, perform a merge, and if the merge is successful the changes will be deployed to the destination environment.</p>
+<p>This will create an integration branch and perform a merge. If the merge is successful the changes will be deployed to the destination environment.</p>
 
 <h2>
 <a name="example-of-a-common-workflow" class="anchor" href="#example-of-a-common-workflow"><span class="octicon octicon-link"></span></a>Example of a Common Workflow</h2>
 
-<p>The workflow we use, and what we expect to be a common workflow out in the wild, is a 
-production environment with full sandboxes for feature development and hotfixes where the hotfix sandbox is kept in sync with production, and the sandboxes are updated with any interim deploys to production for hotfix or separate feature release.</p>
+<p>The workflow we use (and what we expect to be a common workflow out in the wild) is a 
+production environment with full sandboxes for feature development and hotfixes where the hotfix sandbox is kept in sync with production. The sandboxes are updated with any deploys to production for hotfix or separate feature releases.</p>
 
 <p>Let's walk through using SfOpticon to manage this scenario.</p>
 
