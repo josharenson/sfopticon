@@ -6,6 +6,7 @@ $:.unshift ENV['SFOPTICON_HOME']
 $:.unshift File.join(ENV['SFOPTICON_HOME'], 'lib')
 
 require 'sfopticon'
+require 'octokit'
 require 'date'
 require 'extlib'
 require 'fileutils'
@@ -13,9 +14,9 @@ require 'active_record_migrations'
 require 'yard'
 
 ActiveRecordMigrations.configure do |c|
-	c.yaml_config = 'application.yml'
-	c.environment = 'database'
-	c.db_dir = 'lib/sfopticon/db'
+  c.yaml_config = 'application.yml'
+  c.environment = 'database'
+  c.db_dir = 'lib/sfopticon/db'
 end
 ActiveRecordMigrations.load_tasks
 
@@ -50,4 +51,21 @@ task :setup_db => [:create_db, 'db:schema:load']
 
 task :doc => :yard do
   puts "Documentation generated and placed in ./doc. You can run a local server by executing 'yard server'"
+end
+
+task :delete_repo do
+  repo_name = ENV['repo_name']
+
+  unless repo_name
+    abort "repo_name required."
+  end
+
+  config = SfOpticon::Settings.scm
+  octo = Octokit::Client.new :login => config.username, :password => config.password
+  repo = Octokit::Repository.from_url "#{config.url}/#{repo_name}"
+  if octo.delete_repo(repo)
+    puts "Repository deleted."
+  else
+    abort "An unknown issue occurred."
+  end
 end
