@@ -54,19 +54,17 @@ task :doc => :yard do
 end
 
 task :delete_repo do
-  repo_name = ENV['repo_name']
+  repo_name = ENV['repo_name'] || SfOpticon::Environment.find_by_production(true).name rescue nil
 
-  unless repo_name
-    repo_name = SfOpticon::Environment.find_by_production(true).name
-  end
-
-  config = SfOpticon::Settings.scm
-  octo = Octokit::Client.new :login => config.username, :password => config.password
-  repo = Octokit::Repository.from_url "#{config.url}/#{repo_name}"
-  if octo.delete_repo(repo)
-    puts "Repository #{repo} deleted."
-  else
-    puts "An unknown issue occurred. Repo #{repo} not deleted."
+  if repo_name
+    config = SfOpticon::Settings.scm
+    octo = Octokit::Client.new :login => config.username, :password => config.password
+    repo = Octokit::Repository.from_url "#{config.url}/#{repo_name}"
+    if octo.delete_repo(repo)
+      puts "Repository #{repo} deleted."
+    else
+      puts "An unknown issue occurred. Repo #{repo} not deleted."
+    end
   end
 end
 

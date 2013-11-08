@@ -37,11 +37,11 @@ module SfOpticon::Scm::Github
 
   ##
   # Instantiate the local repo objects
-  def init
+  def init(b_name = name)
     if Dir.exist? local_path
-      @log.info { "Init'ing local repository #{local_path}" }
+      log.info { "Init'ing local repository #{local_path}" }
       @git = Git.init(local_path)
-      git.branch(name).checkout
+      git.branch(b_name).checkout
     end
   end
 
@@ -60,7 +60,7 @@ module SfOpticon::Scm::Github
   ##
   # Initializes the branch with a README.md update
   def make_branch
-    @log.info { "Creating branch #{name}" }
+    log.info { "Creating branch #{name}" }
     clone
     add_changes
     commit("Branch initialization")
@@ -72,7 +72,7 @@ module SfOpticon::Scm::Github
   def update_branch(branch_name)
     curr_branch = git.current_branch
 
-    @log.info { "Updating #{branch_name} branch with latest from remote" }
+    log.info { "Updating #{branch_name} branch with latest from remote" }
 
     # First we have to make sure we have the remote branch info
     checkout('master')
@@ -82,7 +82,7 @@ module SfOpticon::Scm::Github
     git.pull('origin', branch_name)
 
     checkout(curr_branch)
-    @log.info { 'Complete' }
+    log.info { 'Complete' }
   end
 
   ##
@@ -111,7 +111,7 @@ module SfOpticon::Scm::Github
   #
   # @param ib_name [String] The name of the integration branch
   def delete_integration_branch(ib_name)
-    @log.info { "Deleting integration branch #{ib_name}"}
+    log.info { "Deleting integration branch #{ib_name}"}
     checkout(name)
     git.branch(ib_name).delete
   end
@@ -119,6 +119,7 @@ module SfOpticon::Scm::Github
   ##
   # Deletes a remote branch
   def delete_remote_branch
+    log.info { "Deleting remote branch #{name}" }
     git.branch('master').checkout
     git.branch(name).delete
     git.push('origin',":#{name}")
@@ -130,9 +131,9 @@ module SfOpticon::Scm::Github
   # @param branch [String] The branch to merge in (optional)
   # @param message [String] The merge messager (optional)
   def merge(branch = 'master', message = nil)
-    @log.info { "Merging branch #{branch} into #{git.current_branch}"}
+    log.info { "Merging branch #{branch} into #{git.current_branch}"}
     merge_result = git.merge(branch, "Merged from #{branch}")
-    @log.info { "Merge result: #{merge_result}" }
+    log.info { "Merge result: #{merge_result}" }
   end
 
   ##
@@ -147,7 +148,7 @@ module SfOpticon::Scm::Github
   def calculate_changes_on_int(other_env)
     changes = { :added => [], :deleted => [] }
     git.diff(name, git.current_branch).each do |commit|
-      @log.debug { "Adding change #{commit.type} - #{commit.path}" }
+      log.debug { "Adding change #{commit.type} - #{commit.path}" }
 
       case commit.type
       when 'modified', 'new'
@@ -155,14 +156,14 @@ module SfOpticon::Scm::Github
         if sf_object
           changes[:added].push(sf_object)
         else
-          @log.info { "#{commit.path} isn't in the list of sf_objects." }
+          log.info { "#{commit.path} isn't in the list of sf_objects." }
         end
       when 'deleted'
         sf_object = environment.sf_objects.find_by_file_name(commit.path)
         if sf_object
           changes[:deleted].push(sf_object)
         else
-          @log.info { "#{commit.path} doesn't exist on #{name}. Skipping deletion."}
+          log.info { "#{commit.path} doesn't exist on #{name}. Skipping deletion."}
         end
       end
     end
@@ -173,7 +174,7 @@ module SfOpticon::Scm::Github
   ##
   # Clones the repo_url into the local path and switches to the branch
   def clone
-    @log.info { "Cloning repository to #{local_path}"}
+    log.info { "Cloning repository to #{local_path}"}
     @git = Git.clone(auth_url, local_path)
     git.branch(name).checkout
   end
@@ -181,7 +182,7 @@ module SfOpticon::Scm::Github
   ##
   # Recursively adds all changes to staging
   def add_changes
-    @log.info { "Recursively adding all changes to staging" }
+    log.info { "Recursively adding all changes to staging" }
     git.add(:all => true)
   end
 
@@ -192,7 +193,7 @@ module SfOpticon::Scm::Github
   # @param author [String] The author of the commit (optional)
   # @param author_email [String] The author email (optional)
   def commit(message, author = nil, author_email = nil)
-    @log.info { "Committing all staged changes to local repository" }
+    log.info { "Committing all staged changes to local repository" }
     if author
       git.config('user.name', author)
     end
@@ -207,7 +208,7 @@ module SfOpticon::Scm::Github
   ##
   # Pushes changes to remote
   def push
-    @log.info { "Pushing to origin" }
+    log.info { "Pushing to origin" }
     git.push('origin', "#{name}:#{name}", true)
   end
 end

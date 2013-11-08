@@ -12,8 +12,9 @@ class SfOpticon::Salesforce
     @log = SfOpticon::Logger
     @config = SfOpticon::Settings.salesforce
 
+    log.debug { "Configuring metaforce for host #{env.host} "}
     Metaforce.configure do |c|
-      c.host = @env.host
+      c.host = env.host
       c.log = false
     end
   end
@@ -54,7 +55,7 @@ class SfOpticon::Salesforce
     end
 
     types.each do |item|
-      @log.info { "Gathering #{item}" }
+      log.info { "Gathering #{item}" }
       begin
         records = client.list_metadata(item).map {|x| x.symbolize_keys }
         records.each do |rec|
@@ -63,9 +64,9 @@ class SfOpticon::Salesforce
           end
         end
       rescue => e
-        @log.warn { "#{item} failed to gather: #{e.message}" }
+        log.warn { "#{item} failed to gather: #{e.message}" }
       end
-      @log.info { "#{item} complete." }
+      log.info { "#{item} complete." }
     end
 
     @sfobjects
@@ -75,7 +76,7 @@ class SfOpticon::Salesforce
   # to the :extract_to parameter.
   def retrieve(opts = { :manifest => nil, :extract_to => '.' })
     opts[:manifest] ||= manifest(@env.sf_objects)
-    @log.debug { "Retrieving #{opts[:manifest].keys.join(',')} to #{opts[:extract_to]}" }
+    log.debug { "Retrieving #{opts[:manifest].keys.join(',')} to #{opts[:extract_to]}" }
     client.retrieve_unpackaged(opts[:manifest]).extract_to(opts[:extract_to]).perform
   end
 

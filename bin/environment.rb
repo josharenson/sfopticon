@@ -165,10 +165,7 @@ class EnvironmentCLI < Thor
       puts "Error creating remote repository. " + e.message
       puts "Attempting to rollback local changes..."
 
-      begin
-        SfOpticon::Environment.destroy(env)
-      rescue ActiveRecord::RecordNotFound
-      end
+      #SfOpticon::Environment.destroy(env) rescue nil
       abort "Successfully rolled back changes."
     end
 

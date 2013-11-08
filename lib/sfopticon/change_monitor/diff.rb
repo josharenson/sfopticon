@@ -6,6 +6,7 @@ class SfOpticon::ChangeMonitor
     # @param orig_snap 
     # @param new_snap
     def self.snap_diff(orig_snap, new_snap)
+      log = SfOpticon::Logger
       changes = []
 
       # Make a simple sf id search array to check for adds and deletes
@@ -19,13 +20,13 @@ class SfOpticon::ChangeMonitor
 
       # And perform the deletion check
       (orig_snap_ids.keys - new_snap_ids.keys).each do |key|
-        @log.info { "Deletion detected: #{orig_snap_ids[key][:full_name]}"}
+        log.info { "Deletion detected: #{orig_snap_ids[key][:full_name]}"}
         changes.push({:object => orig_snap_ids[key], :type => :delete})
       end
 
       # Now perform the addition check
       (new_snap_ids.keys - orig_snap_ids.keys).each do |key|
-        @log.info { "Addition detected: #{new_snap_ids[key][:full_name]}" }
+        log.info { "Addition detected: #{new_snap_ids[key][:full_name]}" }
         changes.push({:object => new_snap_ids[key], :type => :add})
       end
 
@@ -42,9 +43,9 @@ class SfOpticon::ChangeMonitor
         n_file_name = new_snap_ids[key][:file_name]
 
         if o_last_m != n_last_m
-          @log.info { "#{orig_snap_ids[key][:full_name]} has been modified" }
+          log.info { "#{orig_snap_ids[key][:full_name]} has been modified" }
           if o_full_name != n_full_name || o_file_name != n_file_name
-            @log.info { "#{orig_snap_ids[key]} has been renamed to #{new_snap_ids[key][:full_name]}" }
+            log.info { "#{orig_snap_ids[key]} has been renamed to #{new_snap_ids[key][:full_name]}" }
             changes.push({ :old_object => orig_snap_ids[key],
                            :type => :rename,
                            :object => new_snap_ids[key] })

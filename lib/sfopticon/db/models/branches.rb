@@ -1,5 +1,3 @@
-require 'pp'
-
 ##
 # Class for managing branches.
 #
@@ -99,8 +97,6 @@ class SfOpticon::Branch < ActiveRecord::Base
     checkout(name)
     merge(int_branch_name)
     add_tag(int_branch_name)
-
-    # If that was successful we push to the repository
     push
 
     # And make sure to snapshot the environment
