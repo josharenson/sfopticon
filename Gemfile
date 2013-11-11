@@ -4,8 +4,6 @@ gem 'rake'
 gem 'savon'
 gem 'hashie'
 gem 'data_mapper'
-gem 'activerecord', ">= 3.2"
-gem 'activesupport', ">= 3.2"
 gem 'builder', "~> 3.0"
 gem 'i18n'
 gem 'zip'

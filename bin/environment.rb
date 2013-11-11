@@ -121,7 +121,7 @@ class EnvironmentCLI < Thor
   end
 
   option :name, :type => :string, :required => true
-  option :host, :type => :string, :required => false, :default => 'test.salesforce.com'
+  option :host, :type => :string, :required => false
   option :username, :type => :string, :required => false
   option :password, :type => :string, :required => false
   option :securitytoken, :type => :string, :required => false
@@ -129,6 +129,15 @@ class EnvironmentCLI < Thor
   desc "create", "Create a new Salesforce organization"
   def create
     opts_copy = options.dup
+
+    # Smart default for the host field
+    unless opts_copy[:host]
+      if opts_copy[:production]
+        opts_copy[:host] = 'login.salesforce.com'
+      else
+        opts_copy[:host] = 'test.salesforce.com'
+      end
+    end    
 
     # Only 1 production environment
     if opts_copy[:production] and SfOpticon::Environment.find_by_production(true)

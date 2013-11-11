@@ -3,7 +3,7 @@ require 'metaforce/reporters/deploy_reporter'
 require 'fileutils'
 
 class SfOpticon::Environment < ActiveRecord::Base
-  attr_reader :sforce, :log, :config
+  attr_reader :log, :config
   validates_uniqueness_of :name,
     :message => "This organization is already configured."
   attr_accessible :name,
@@ -21,21 +21,21 @@ class SfOpticon::Environment < ActiveRecord::Base
   after_initialize do |env|
     @log = SfOpticon::Logger
     @config = SfOpticon::Settings.salesforce
-    @sforce = SfOpticon::Salesforce.new(env)
   end
 
   ##
   # This method is called when an environment is first created. This allows
   # us to reach out and create the remote repository if needed, or the branch.
   # This will also clone the branch.
-  after_create do |env|
+  after_create do
+    # Validate salesforce credentials before creating anything remote.
+    unless sforce.credentials_are_valid?
+      raise "Could not login to Salesforce! Please verify credentials."
+    end    
+
     if production
       # If we're a production environment then we need to create the remote
       # repository
-      unless @sforce.credentials_are_valid?
-        puts "Could not login to Salesforce! Please verify credentials."
-        raise
-      end
       SfOpticon::Scm.adapter.create_remote_repository(name)
     end
 
@@ -47,12 +47,18 @@ class SfOpticon::Environment < ActiveRecord::Base
     # place, as though the non-production environment was refreshed even if it
     # wasn't.
     if production
-      sforce.retrieve :manifest => @sforce.manifest(sf_objects),
-        :extract_to => branch.local_path
+      sforce.retrieve :manifest => sforce.manifest(sf_objects),
+          :extract_to => branch.local_path
       branch.add_changes
       branch.commit("Initial push of production code")
       branch.push
     end
+  end
+
+  ##
+  # Each call to sforce will reconfigure the metaforce client.
+  def sforce
+    SfOpticon::Salesforce.new(self)
   end
 
   ##

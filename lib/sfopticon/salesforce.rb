@@ -12,34 +12,24 @@ class SfOpticon::Salesforce
     @log = SfOpticon::Logger
     @config = SfOpticon::Settings.salesforce
 
-    log.debug { "Configuring metaforce for host #{env.host} "}
     Metaforce.configure do |c|
       c.host = env.host
       c.log = false
+      log.debug { "Host configured to #{c.host}"}
     end
   end
 
   # @!attribute client
   #    @return [Metaforce::Metadata::Client]
   def client
-    unless @client
-      @client = Metaforce::Metadata::Client.new :username => @env.username,
+    @client ||= Metaforce::Metadata::Client.new :username => @env.username,
         :password => @env.password,
         :security_token => @env.securitytoken
-    end
-
-    @client
   end
 
-
   def credentials_are_valid?
-    begin
-      login = Metaforce::Login.new @env.username, @env.password, @env.securitytoken
-      login.login
-    rescue
-      return false
-    end
-    return true
+    login = Metaforce::Login.new @env.username, @env.password, @env.securitytoken
+    login.login
   end
 
   # Gathers all metadata information for the list of metadata types, if provided.
