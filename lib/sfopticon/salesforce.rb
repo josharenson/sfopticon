@@ -14,7 +14,8 @@ class SfOpticon::Salesforce
 
     Metaforce.configure do |c|
       c.host = env.host
-      c.log = false
+      c.log = false 
+      c.api_version = '29.0'
       log.debug { "Host configured to #{c.host}"}
     end
   end
@@ -47,14 +48,26 @@ class SfOpticon::Salesforce
     types.each do |item|
       log.info { "Gathering #{item}" }
       begin
-        records = client.list_metadata(item).map {|x| x.symbolize_keys }
+        records = client.list_metadata(item)
+
+        # If there's only one item for this metadata type it is returned
+        # as a bare hash, rather than an array of hashes.
+        if records.is_a? Hash
+          records = [records]
+        end
+
+        records.map! {|x| x.symbolize_keys }
         records.each do |rec|
           if rec.include?(:full_name) and rec.include?(:last_modified_date)
             @sfobjects << mg.map_fields_from_sf(rec)
           end
         end
       rescue => e
-        log.warn { "#{item} failed to gather: #{e.message}" }
+        if e.message == "undefined method `result' for nil:NilClass"
+          log.info { "No custom #{item}'s to gather" }
+        else
+          log.error { "#{item} failed to gather: #{e.message}" }
+        end
       end
       log.info { "#{item} complete." }
     end
