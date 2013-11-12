@@ -131,7 +131,7 @@ module SfOpticon::Scm::Base
   #    relative to the base of the repository.
   # @return [Boolean] True if successful, false otherwise.
   def add_file(src,dst)
-    base_path = File.dirname(src)
+    base_path = File.join(local_path, File.dirname(dst))
 
     unless Dir.exist? base_path
       FileUtils.mkdir_p(base_path)
