@@ -282,6 +282,7 @@ class SfOpticon::Environment < ActiveRecord::Base
         branch.add_changes
         branch.commit(commit_message, change[:object][:last_modified_by_name])
         sf_objects << sf_objects.new(change[:object])
+        save!
 
       when :modify
         branch.clobber_file("#{dir}/#{new_file}", new_file)
@@ -291,13 +292,12 @@ class SfOpticon::Environment < ActiveRecord::Base
 
         branch.add_changes
         branch.commit(commit_message, change[:object][:last_modified_by_name])
-        sf_objects
-        .find_by_sfobject_id(change[:object][:sfobject_id])
-        .clobber(change[:object])
 
+        sfo = sf_objects.find_by_sfobject_id(change[:object][:sfobject_id])
+        sfo.clobber(change[:object])
       end
     end
-    save!
+
     branch.push
     FileUtils.remove_entry_secure(dir)
 

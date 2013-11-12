@@ -13,6 +13,7 @@ class SfOpticon::SfObject < ActiveRecord::Base
 
   def clobber(sfobject)
     self.assign_attributes(sfobject, :without_protection => true)
+    save!
   end
 
   def self.map_fields_from_sf(sfobject)
