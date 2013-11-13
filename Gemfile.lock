@@ -1,8 +1,8 @@
 GIT
   remote: https://github.com/ryanparr/metaforce.git
-  revision: e21f7805727022d459bb06db66aaa25d935709a0
+  revision: 96c89f6a5804496168ca5907d737476d7476a456
   specs:
-    metaforce (1.0.7)
+    metaforce (1.0.7.1)
       activesupport
       hashie (~> 1.2.0)
       listen (~> 0.6.0)
