@@ -7,7 +7,6 @@ class SfOpticon
   require 'active_record'
   require 'active_support/core_ext/hash'
   require 'protected_attributes'
-  require 'deep_symbolize'
 
   # Settings needs to be required before any project local libs
   require 'sfopticon/settings'
