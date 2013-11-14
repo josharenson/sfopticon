@@ -48,7 +48,9 @@ class SfOpticon::Environment < ActiveRecord::Base
     # wasn't.
     if production
       sforce.retrieve :manifest => sforce.manifest(sf_objects),
-          :extract_to => branch.local_path
+        :extract_to => branch.local_path
+
+      branch.ignore_package_xml
       branch.add_changes
       branch.commit("Initial push of production code")
       branch.push

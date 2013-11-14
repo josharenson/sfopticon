@@ -39,6 +39,12 @@ module SfOpticon::Scm::Base
   end
 
   ##
+  # Add the ignores/exclusions file to ignore package.xml
+  def ignore_package_xml
+    raise NotImplementedError
+  end
+
+  ##
   # @return [String] The repository URL with authentication information
   #    embedded
   def auth_url

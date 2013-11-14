@@ -46,6 +46,14 @@ module SfOpticon::Scm::Github
   end
 
   ##
+  # Add the .gitignores file with package.xml
+  def ignore_package_xml
+    File.open(File.join(local_path, '.gitignore'), 'w') do |f|
+      f.puts "package.xml"
+    end
+  end
+
+  ##
   # Switches us to a branch
   def checkout(branch)
     git.checkout(branch)
