@@ -56,12 +56,17 @@ module SfOpticon::Scm::Github
   ##
   # Switches us to a branch
   def checkout(branch)
+    git = Git.open(environment.branch.local_path)
     git.checkout(branch)
+
+    # Return the commit id of what we just checked out
+    git.log.first.sha
   end
 
   ##
   # Creates a tag
   def add_tag(text)
+    git = Git.open(environment.branch.local_path)
     git.add_tag(text)
   end
 
@@ -102,16 +107,11 @@ module SfOpticon::Scm::Github
   # @param env_name [String] The name of the environment that we'll
   #    be merging into this integration branch
   # @return [String] The name of the integration branch
-  def make_integration_branch(env_name)
+  def make_integration_branch(dest_env)
     # First just ensure that we're on the correct branch
-    git.checkout(name)
-
-    # Generate a name for the integration branch
-    timestamp = DateTime.now.strftime("%Y%m%d%H%M%S")
-    ib_name = "Integration_#{env_name}_to_#{name}_#{timestamp}"
-
-    git.branch(ib_name).checkout
-    ib_name
+    #make_branch
+    @git = Git.open(dest_env.branch.local_path)
+    git.branch(name).checkout
   end
 
   ##
@@ -138,10 +138,14 @@ module SfOpticon::Scm::Github
   #
   # @param branch [String] The branch to merge in (optional)
   # @param message [String] The merge messager (optional)
+  # @return [String] The commit-id of the merge 
   def merge(branch = 'master', message = nil)
+    git = Git.open(environment.branch.local_path)
     log.info { "Merging branch #{branch} into #{git.current_branch}"}
     merge_result = git.merge(branch, "Merged from #{branch}")
     log.info { "Merge result: #{merge_result}" }
+    
+    git.log.first.sha
   end
 
   ##
@@ -150,17 +154,19 @@ module SfOpticon::Scm::Github
   # at the time. We need the other_env to look up additions in the sf_objects
   # so we have enough information for a manifest.
   #
-  # @param other_env [SfOpticon::Environment] The environment we're merging in
+  # @param env [SfOpticon::Environment] The environment containing the
+  # integration branch to be merged into head
   # @return [Hash] A hash with 2 keys, :added and :deleted, which are
   #    arrays of sf_objects
-  def calculate_changes_on_int(other_env)
+  def calculate_changes_on_int
+    git = Git.open(environment.branch.local_path)
     changes = { :added => [], :deleted => [] }
-    git.diff(name, git.current_branch).each do |commit|
+    git.diff(pre_merge_commit_id, post_merge_commit_id).each do |commit|
       log.debug { "Adding change #{commit.type} - #{commit.path}" }
 
       case commit.type
       when 'modified', 'new'
-        sf_object = other_env.sf_objects.find_by_file_name(commit.path)
+        sf_object = environment.sf_objects.find_by_file_name(commit.path)
         if sf_object
           changes[:added].push(sf_object)
         else
@@ -216,6 +222,7 @@ module SfOpticon::Scm::Github
   ##
   # Pushes changes to remote
   def push
+    git = Git.open(environment.branch.local_path)
     log.info { "Pushing to origin" }
     git.push('origin', "#{name}:#{name}", true)
   end
