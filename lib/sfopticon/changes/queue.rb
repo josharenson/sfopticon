@@ -22,7 +22,7 @@ class SfOpticon::Changes::Queue
   # Apply each change in the queue to the dst_dir in order
   # and apply the block. This is for the SCM to commit, or
   # whatever.
-  def apply_to_environment(src_dir, dst_dir)
+  def apply_change_queue(src_dir, dst_dir)
     all_changes.each do |change|
       change.apply(src_dir, dst_dir)
       yield change
