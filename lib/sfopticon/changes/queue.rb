@@ -14,7 +14,7 @@ class SfOpticon::Changes::Queue
 
   def sorter(list)
     list.sort {|x,y|
-      x.sf_object.last_modified_date <=> y.last_modified_date
+      x.sf_object[:last_modified_date] <=> y.sf_object[:last_modified_date]
     }
   end
 

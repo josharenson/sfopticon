@@ -43,7 +43,7 @@ class SfOpticon::Changes::Diff
       n_file_name = new_snap_ids[key][:file_name]
 
       if o_last_m != n_last_m
-        log.info { "#{orig_snap_ids[key][:full_name]} has been modified" }
+        log.info { "Modification detected: #{orig_snap_ids[key][:full_name]}" }
         if o_full_name != n_full_name || o_file_name != n_file_name
           log.warn { "WARNING: Object renames are not able to be handled in the Metadata API. This action will create a new object upon deploy." }
           log.info { "#{orig_snap_ids[key]} has been renamed to #{new_snap_ids[key][:full_name]}" }
