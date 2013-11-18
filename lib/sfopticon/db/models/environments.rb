@@ -203,8 +203,8 @@ class SfOpticon::Environment < ActiveRecord::Base
   # Returns the changeset
   def changeset
     curr_snap = sforce.gather_metadata
-    diff = SfOpticon::ChangeMonitor::Diff.snap_diff(sf_objects, curr_snap)
-    if diff.size == 0
+    change_queue = SfOpticon::Changes::Diff.snap_diff(sf_objects, curr_snap)
+    if change_queue.all_changes.size == 0
       log.info { "No changes detected in #{name}" }
       return
     end
@@ -215,95 +215,47 @@ class SfOpticon::Environment < ActiveRecord::Base
 
     # First we have to generate a manifest of the additions and modifications
     # to retrieve those new objects
-    mods = diff.select {|x|
-      x[:type] == :add || x[:type] == :modify
-    }.map {|x| x[:object] }
+    mods = [change_queue.additions, change_queue.modifications].flatten.map {|x| x.sf_object }
 
     # Retrieve the changes into a temporary directory
     dir = Dir.mktmpdir("changeset")
     sforce.retrieve(:manifest => sforce.manifest(mods), :extract_to => dir)
 
     # Now we replay the changes into the repo and the database
-    diff.each do |change|
-      log.info { "DIFF: #{change[:type]} - #{change[:object][:full_name]}" }
+    change_queue.apply_to_environment(dir, branch.local_path) do |change|
+      log.info { "DIFF: #{change.change_type} - #{change.sf_object[:full_name]}" }
 
-      commit_message = "#{change[:type].to_s.capitalize} - #{change[:object][:full_name]}\n\n"
-      if change[:type] == :delete
-        commit_message += "#{change[:object][:file_name]} deleted"
+      commit_message = "#{change.change_type} - #{change.sf_object[:full_name]}\n\n"
+      if change.change_type == :deletion
+        commit_message += "#{change.sf_object[:file_name]} deleted"
       else
-        change[:object].keys.each do |key|
-          commit_message += "#{key.to_s.camelize}: #{change[:object][key]}\n"
+        change.sf_object.keys.each do |key|
+          commit_message += "#{key.to_s.camelize}: #{change.sf_object[key]}\n"
         end
       end
 
-      # We have to copy the metadata files for Apex classes since they don't
-      # embed their information on their own.
-      meta_xml = if File.exist? "#{dir}/#{change[:object][:file_name]}-meta.xml"
-        true
-      else
-        false
-      end
+      change.apply(dir, branch.local_path)
+      branch.add_changes
+      branch.commit(commit_message, change.sf_object[:last_modified_by_name])
 
-      # Shortcuts until this trash is refactored out
-      if change.has_key? :old_object
-        old_file = change[:old_object][:file_name]
-      end
-      new_file = change[:object][:file_name]
-
-      case change[:type]
-      when :delete
-        branch.delete_file(new_file)
-        if meta_xml
-          branch.delete_file("#{new_file}-meta.xml")
-        end
-
-        branch.add_changes
-        branch.commit(commit_message, change[:object][:last_modified_by_name])
+      case change.change_type
+      when :deletion
+        sf_objects.find_by_sfobject_id(change.sf_object[:sfobject_id]).delete
+      when :modification
         sf_objects
-        .find_by_sfobject_id(change[:object][:sfobject_id])
-        .delete()
-
-      when :rename
-        branch.rename_file(old_file, new_file)
-        if meta_xml
-          branch.rename("#{old_file}-meta.xml", "#{new_file}-meta.xml")
-        end
-
-        branch.add_changes
-        branch.commit(commit_message, change[:object][:last_modified_by_name])
-        sf_objects
-        .find_by_sfobject_id(change[:old_object][:sfobject_id])
-        .clobber(change[:object])
-
-      when :add
-        branch.add_file("#{dir}/#{new_file}", new_file)
-        if meta_xml
-          branch.add_file("#{dir}/#{new_file}-meta.xml", "#{new_file}-meta.xml")
-        end
-
-        branch.add_changes
-        branch.commit(commit_message, change[:object][:last_modified_by_name])
-        sf_objects << sf_objects.new(change[:object])
-        save!
-
-      when :modify
-        branch.clobber_file("#{dir}/#{new_file}", new_file)
-        if meta_xml
-          branch.clobber_file("#{dir}/#{new_file}-meta.xml", "#{new_file}-meta.xml")
-        end
-
-        branch.add_changes
-        branch.commit(commit_message, change[:object][:last_modified_by_name])
-
-        sfo = sf_objects.find_by_sfobject_id(change[:object][:sfobject_id])
-        sfo.clobber(change[:object])
+        .find_by_sfobject_id(change.sf_object[:sfobject_id])
+        .clobber(change.sf_object)
+      when :addition
+        sf_objects << sf_objects.new(change.sf_object)
       end
+
+      save!
     end
 
     branch.push
     FileUtils.remove_entry_secure(dir)
 
     log.info { "Complete." }
-    diff
+    change_queue
   end
 end

@@ -17,5 +17,5 @@ class SfOpticon
   require 'sfopticon/logger'
   require 'sfopticon/db/init'
   require 'sfopticon/salesforce'
-  require 'sfopticon/changes/diff'
+  require 'sfopticon/changes'
 end

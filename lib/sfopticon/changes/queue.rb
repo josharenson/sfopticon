@@ -1,32 +1,31 @@
-class SfOpticon::Changes
-  class Queue
+class SfOpticon::Changes::Queue
+  attr_accessor :additions, :deletions, :modifications
+
+  def initialize
     @log = SfOpticon::Logger
-    @changes = {}
-    [:additions, :modifications, :deletions].each {|k| @changes[k] = []}
+    @additions = []
+    @deletions = []
+    @modifications = []
+  end
 
-    ## 
-    # This will create the following methods:
-    # - additions
-    # - add_to_additions
-    # - modifications
-    # - add_to_modifications
-    # - deletions
-    # - add_to_deletions
-    @changes.keys.each do |k|
-      define_method(k) { @changes[k] }
-      define_method("add_to_#{k}") {|sfo| 
-        @changes[k] << sfo
-        @changes[k].sort! {|x,y|
-          x.last_modified_date <=> y.last_modified_date
-        }
-      }
-    end
+  def all_changes
+    sorter([@additions, @deletions, @modifications].flatten)
+  end
 
-    ##
-    # Apply each change in the queue to the dst_dir in order
-    # and apply the block. This is for the SCM to commit, or
-    # whatever.
-    def apply_to_environment(src_dir, dst_dir, &block)
+  def sorter(list)
+    list.sort {|x,y|
+      x.sf_object.last_modified_date <=> y.last_modified_date
+    }
+  end
+
+  ##
+  # Apply each change in the queue to the dst_dir in order
+  # and apply the block. This is for the SCM to commit, or
+  # whatever.
+  def apply_to_environment(src_dir, dst_dir)
+    all_changes.each do |change|
+      change.apply(src_dir, dst_dir)
+      yield change
     end
   end
 end
