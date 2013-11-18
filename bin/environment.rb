@@ -168,6 +168,11 @@ class EnvironmentCLI < Thor
       opts_copy[:password] = STDIN.noecho(&:gets).chomp
     end
 
+    if not opts_copy[:securitytoken]
+      print "\nSalesforce security token (optional): "
+      opts_copy[:securitytoken] = $stdin.gets.chomp
+    end
+
     begin
       env = SfOpticon::Environment.create(opts_copy)
     rescue Exception => e

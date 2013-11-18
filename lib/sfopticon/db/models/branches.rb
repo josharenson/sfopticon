@@ -16,7 +16,6 @@ class SfOpticon::Branch < ActiveRecord::Base
 
   attr_accessible :name
   belongs_to :environment
-  has_many :integration_branches
 
   after_initialize do |branch|
     @log = SfOpticon::Logger
@@ -38,6 +37,10 @@ class SfOpticon::Branch < ActiveRecord::Base
   def delete
     FileUtils.remove_entry_secure(local_path)
     super
+  end
+
+  def update
+    update_branch(name)
   end
 
   ##

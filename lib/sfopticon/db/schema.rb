@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20131104052345) do
+ActiveRecord::Schema.define(version: 20131114232620) do
 
   create_table "branches", force: true do |t|
     t.string   "name"
@@ -33,13 +33,15 @@ ActiveRecord::Schema.define(version: 20131104052345) do
   end
 
   create_table "integration_branches", force: true do |t|
-    t.string   "name",                        null: false
-    t.integer  "source_env",                  null: false
-    t.integer  "dest_env",                    null: false
-    t.string   "commit_id"
-    t.boolean  "is_deployed", default: false
+    t.string   "name",                                 null: false
+    t.integer  "source_env",                           null: false
+    t.integer  "dest_env",                             null: false
+    t.boolean  "is_deployed",          default: false
     t.datetime "created_at"
     t.datetime "updated_at"
+    t.integer  "environment_id"
+    t.string   "pre_merge_commit_id"
+    t.string   "post_merge_commit_id"
   end
 
   create_table "sf_objects", force: true do |t|

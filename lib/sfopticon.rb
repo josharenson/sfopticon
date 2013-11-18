@@ -7,6 +7,7 @@ class SfOpticon
   require 'active_record'
   require 'active_support/core_ext/hash'
   require 'protected_attributes'
+  require 'deep_symbolize'
 
   # Settings needs to be required before any project local libs
   require 'sfopticon/settings'
@@ -17,5 +18,5 @@ class SfOpticon
   require 'sfopticon/logger'
   require 'sfopticon/db/init'
   require 'sfopticon/salesforce'
-  require 'sfopticon/changes'
+  require 'sfopticon/change_monitor/diff'
 end
