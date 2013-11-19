@@ -60,7 +60,13 @@ class SfOpticon::IntegrationBranch < ActiveRecord::Base
 
     # Deploy the changes to Salesforce _first_ so we can abort the merge
     # if the unit tests fail :-)
-    has_changes = !(changeset[:deleted].empty? && changeset[:added].empty?)
+    has_changes = if changeset[:deleted].empty? and changeset[:added].empty?
+      false
+    else
+      true
+    end
+    
+    log.debug { "has_changes == #{has_changes}" }
     if has_changes
       if changeset[:deleted].size > 0
         environment.deploy(changeset[:deleted], true)
