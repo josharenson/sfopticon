@@ -42,3 +42,4 @@ class SfOpticon::Branch < ActiveRecord::Base
   def update
     update_branch(name)
   end
+end
